@@ -43,11 +43,11 @@ export default function HomePage() {
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </Link>
-                  <Link href="/about">
-                    <Button size="lg" variant="outline">
-                      Learn More
-                    </Button>
-                  </Link>
+                   <a href="#how-it-works">
+                  <Button size="lg" variant="outline">
+                    Learn More
+                  </Button>
+                  </a>
                 </div>
               </div>
               <div className="mx-auto lg:mx-0 relative">
@@ -57,10 +57,11 @@ export default function HomePage() {
                   <div className="space-y-4">
                     <div className="aspect-video overflow-hidden rounded-lg">
                       <img
-                        src="/Users/hilik_tsarfati/Downloads/joy.png"
+                        src="/promo.png"
                         alt="App preview"
                         className="object-cover w-full"
                       />
+
                     </div>
                     <div className="grid grid-cols-3 gap-4">
                       <div className="flex flex-col items-center justify-center rounded-lg border bg-background p-4 shadow-sm">
@@ -82,7 +83,7 @@ export default function HomePage() {
             </div>
           </div>
         </section>
-        <section className="py-12 md:py-24 bg-white">
+        <section id="how-it-works" className="py-12 md:py-24 bg-white">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
@@ -130,7 +131,7 @@ export default function HomePage() {
           </div>
         </section>
       </main>
-      <footer className="border-t py-6 md:py-0 pb-safe">
+      {/*<footer className="border-t py-6 md:py-0 pb-safe">
         <div className="container flex flex-col items-center justify-between gap-4 md:h-16 md:flex-row px-4">
           <p className="text-sm text-foreground">
             &copy; {new Date().getFullYear()} RoomMatch. All rights reserved.
@@ -144,7 +145,7 @@ export default function HomePage() {
             </Link>
           </div>
         </div>
-      </footer>
+      </footer>*/}
     </div>
   )
 }
