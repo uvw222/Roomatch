@@ -1,5 +1,5 @@
 "use client"
-
+import { useEffect } from "react"
 import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -19,77 +19,35 @@ type Profile = {
   image: string
 }
 
-const profiles: Profile[] = [
-  {
-    id: 1,
-    name: "Sarah Johnson",
-    age: 26,
-    occupation: "Graphic Designer",
-    location: "Downtown",
-    bio: "Creative and tidy roommate looking for a similar match. I enjoy quiet evenings and occasional social gatherings.",
-    budget: 1200,
-    cleanliness: 90,
-    interests: ["Art", "Photography", "Hiking"],
-    image: "/placeholder.svg?height=400&width=300&text=Sarah",
-  },
-  {
-    id: 2,
-    name: "Michael Brown",
-    age: 28,
-    occupation: "Software Engineer",
-    location: "Midtown",
-    bio: "Tech enthusiast who works from home most days. I'm clean, quiet, and respectful of shared spaces.",
-    budget: 1400,
-    cleanliness: 85,
-    interests: ["Coding", "Gaming", "Cooking"],
-    image: "/placeholder.svg?height=400&width=300&text=Michael",
-  },
-  {
-    id: 3,
-    name: "Emily Davis",
-    age: 24,
-    occupation: "Marketing Specialist",
-    location: "Westside",
-    bio: "Outgoing but respectful roommate. I love cooking and am looking for someone who appreciates a clean living space.",
-    budget: 1100,
-    cleanliness: 95,
-    interests: ["Cooking", "Fitness", "Travel"],
-    image: "/placeholder.svg?height=400&width=300&text=Emily",
-  },
-  {
-    id: 4,
-    name: "David Wilson",
-    age: 27,
-    occupation: "Financial Analyst",
-    location: "Financial District",
-    bio: "Professional with a regular 9-5 schedule. I'm organized, clean, and looking for a drama-free living situation.",
-    budget: 1500,
-    cleanliness: 80,
-    interests: ["Finance", "Running", "Reading"],
-    image: "/placeholder.svg?height=400&width=300&text=David",
-  },
-  {
-    id: 5,
-    name: "Jessica Martinez",
-    age: 25,
-    occupation: "Nurse",
-    location: "Medical District",
-    bio: "Healthcare worker with rotating shifts. I'm quiet, clean, and respectful of others' space and privacy.",
-    budget: 1300,
-    cleanliness: 90,
-    interests: ["Healthcare", "Yoga", "Movies"],
-    image: "/placeholder.svg?height=400&width=300&text=Jessica",
-  },
-]
+
 
 export default function MatchPage() {
+  const [profiles, setProfiles] = useState<Profile[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [direction, setDirection] = useState<string | null>(null)
   const [matches, setMatches] = useState<number[]>([])
   const isMobile = useMobile()
   const cardRef = useRef<HTMLDivElement>(null)
-
   const currentProfile = profiles[currentIndex]
+
+useEffect(() => {
+  const fetchMatches = async () => {
+    try {
+      const res = await fetch("/api/matches")
+      const data = await res.json()
+      if (data.success) {
+        setProfiles(data.matches)
+      } else {
+        console.error("Failed to load matches")
+      }
+    } catch (err) {
+      console.error("Error fetching matches:", err)
+    }
+  }
+
+  fetchMatches()
+}, [])
+
 
   const handleSwipe = (direction: string) => {
     setDirection(direction)
@@ -154,11 +112,16 @@ export default function MatchPage() {
                     <p className="text-sm opacity-90 mb-2">{currentProfile.occupation}</p>
                     <p className="text-sm mb-4">{currentProfile.bio}</p>
                     <div className="flex flex-wrap gap-2 mb-4">
-                      {currentProfile.interests.map((interest, i) => (
-                        <span key={i} className="text-xs bg-white/20 px-2 py-1 rounded-full">
-                          {interest}
-                        </span>
-                      ))}
+                      {currentProfile?.interests?.length > 0 ? (
+                      currentProfile.interests.map((interest, i) => (
+                      <span key={i} className="text-xs bg-white/20 px-2 py-1 rounded-full">
+                      {interest}
+                      </span>
+                          ))
+                      ) : (
+                          <span className="text-xs text-white/60">No interests listed</span>
+                      )}
+
                     </div>
                     <div className="flex justify-between text-sm">
                       <div>

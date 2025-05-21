@@ -4,7 +4,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import ViewportHandler from "@/components/viewport-handler"
-
+import LayoutShell from "@/components/layout-shell"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
@@ -46,7 +46,7 @@ export default function RootLayout({
       <body className={`${inter.className} h-full overflow-x-hidden`}>
         <ThemeProvider defaultTheme="light" disableTransitionOnChange>
           <ViewportHandler />
-          <div className="app-container">{children}</div>
+          <LayoutShell>{children}</LayoutShell>
         </ThemeProvider>
       </body>
     </html>

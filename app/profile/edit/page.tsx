@@ -1,7 +1,7 @@
 "use client"
-
+import { useEffect } from "react"
 import type React from "react"
-
+import Cookies from "js-cookie"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -19,31 +19,58 @@ export default function EditProfilePage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("basic")
-
+  const email = Cookies.get("userEmail")
   const [formData, setFormData] = useState({
-    name: "Alex Johnson",
-    age: 25,
-    gender: "male",
-    occupation: "Software Developer",
-    bio: "I'm a clean, quiet professional looking for a roommate with similar habits. I enjoy cooking and occasional movie nights.",
-    budget: 1200,
-    moveInDate: "2023-06-15",
-    location: "Downtown",
-    hasPets: false,
-    isSmoker: false,
-    lifestyle: {
-      cleanliness: 80,
-      noise: 40,
-      guestsFrequency: 50,
-      sleepSchedule: "night-owl",
-    },
-    preferences: {
-      ageRange: [20, 35],
-      genderPreference: "any",
-      petsAllowed: true,
-      smokingAllowed: false,
-    },
-  })
+  name: "Alex Johnson",
+  age: 25,
+  gender: "male",
+  occupation: "Software Developer",
+  bio: "I'm a clean, quiet professional looking for a roommate with similar habits. I enjoy cooking and occasional movie nights.",
+  budget: 1200,
+  moveInDate: "2023-06-15",
+  location: "Downtown",
+  hasPets: false,
+  isSmoker: false,
+  profileImage: "",         
+  profileImageFile: null as File | null,
+  lifestyle: {
+    cleanliness: 80,
+    noise: 40,
+    guestsFrequency: 50,
+    sleepSchedule: "night-owl",
+  },
+  preferences: {
+    ageRange: [20, 35],
+    genderPreference: "any",
+    petsAllowed: true,
+    smokingAllowed: false,
+  },
+})
+
+useEffect(() => {
+  const fetchProfile = async () => {
+    const email = Cookies.get("userEmail")
+    if (!email) return
+
+    try {
+      const res = await fetch(`/api/get-profile?email=${email}`)
+      const data = await res.json()
+
+      if (res.ok && data.success) {
+        setFormData((prev) => ({
+          ...prev,
+          ...data.profile,
+        }))
+      } else {
+        console.error("Profile not found")
+      }
+    } catch (err) {
+      console.error("Failed to fetch profile", err)
+    }
+  }
+
+  fetchProfile()
+}, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -66,15 +93,40 @@ export default function EditProfilePage() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+  e.preventDefault()
+  setIsLoading(true)
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
+  try {
+const email = Cookies.get("userEmail")
+if (!email) {
+  alert("Could not find user identity. Please log in again.")
+  setIsLoading(false)
+  return
+}
+
+const response = await fetch("/api/save-profile", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ ...formData, email }), // 👈 include email
+})
+
+
+    const result = await response.json()
+
+    if (result.success) {
       router.push("/dashboard")
-    }, 1500)
+    } else {
+      console.error("Failed to save profile")
+    }
+  } catch (error) {
+    console.error("Error submitting form:", error)
+  } finally {
+    setIsLoading(false)
   }
+}
+
 
   return (
     <div className="container py-8 px-4">
@@ -98,20 +150,39 @@ export default function EditProfilePage() {
                 <CardContent className="space-y-6">
                   <div className="flex flex-col md:flex-row gap-6">
                     <div className="flex flex-col items-center gap-4">
-                      <div className="relative h-32 w-32 rounded-full overflow-hidden bg-gray-100 border">
-                        <img
-                          src="/placeholder.svg?height=128&width=128&text=Profile"
-                          alt="Profile"
-                          className="h-full w-full object-cover"
-                        />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute bottom-0 right-0 rounded-full bg-white shadow-md h-8 w-8"
-                        >
-                          <Upload className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      <div className="relative inline-block">
+  <div className="h-32 w-32 rounded-full overflow-hidden bg-gray-100 border">
+    <img
+      src={formData.profileImage || "/placeholder.svg?height=128&width=128&text=Profile"}
+      alt="Profile"
+      className="h-full w-full object-cover"
+    />
+  </div>
+  <label
+    htmlFor="profileImageUpload"
+    className="absolute -top-2 -right-2 rounded-full bg-white shadow-md h-8 w-8 flex items-center justify-center cursor-pointer border"
+  >
+    <Upload className="h-4 w-4" />
+    <input
+      id="profileImageUpload"
+      type="file"
+      accept="image/*"
+      className="hidden"
+      onChange={(e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const imageUrl = URL.createObjectURL(file);
+        setFormData((prev) => ({
+          ...prev,
+          profileImage: imageUrl,
+          profileImageFile: file,
+        }));
+      }}
+    />
+  </label>
+</div>
+
                       <p className="text-sm text-gray-500">Upload a profile photo</p>
                     </div>
 

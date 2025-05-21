@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-
+import Cookies from "js-cookie"
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -31,15 +31,35 @@ export default function LoginPage() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+  e.preventDefault()
+  setIsLoading(true)
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
+  try {
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: formData.email,
+        password: formData.password,
+      }),
+    })
+
+    const data = await res.json()
+
+    if (res.ok && data.success) {
+      // ✅ Save email in cookie for later use
+      Cookies.set("userEmail", formData.email)
       router.push("/dashboard")
-    }, 1500)
+    } else {
+      alert(data.message || "Login failed")
+    }
+  } catch (err) {
+    console.error("Login error:", err)
+    alert("Something went wrong.")
+  } finally {
+    setIsLoading(false)
   }
+}
 
   return (
     <div className="flex mobile-height-screen flex-col items-center justify-center px-4 pt-safe pb-safe">

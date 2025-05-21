@@ -29,15 +29,30 @@ export default function RegisterPage() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+  e.preventDefault()
+  setIsLoading(true)
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
+  try {
+    const res = await fetch("/api/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    })
+
+    const data = await res.json()
+    if (res.ok && data.success) {
       router.push("/profile/edit")
-    }, 1500)
+    } else {
+      alert(data.error || "Failed to register")
+    }
+  } catch (err) {
+    console.error("Registration failed:", err)
+    alert("Something went wrong.")
+  } finally {
+    setIsLoading(false)
   }
+}
+
 
   return (
     <div className="flex mobile-height-screen flex-col items-center justify-center px-4 pt-safe pb-safe">
