@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -19,33 +19,30 @@ import { Calendar, Heart, Home, LogOut, Menu, MessageCircle, Settings, User } fr
 export default function DashboardNav() {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
+  const [profileImage, setProfileImage] = useState("")
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch("/api/profile/me")
+        const data = await res.json()
+        if (data.success) {
+          setProfileImage(data.profile?.profileImage || "")
+        }
+      } catch (err) {
+        console.error("Failed to load profile image", err)
+      }
+    }
+
+    fetchProfile()
+  }, [])
 
   const routes = [
-    {
-      name: "Dashboard",
-      path: "/dashboard",
-      icon: <Home className="h-5 w-5" />,
-    },
-    {
-      name: "Find Match",
-      path: "/match",
-      icon: <Heart className="h-5 w-5" />,
-    },
-    {
-      name: "RooChat",
-      path: "/chat",
-      icon: <MessageCircle className="h-5 w-5" />,
-    },
-    {
-      name: "Calendar",
-      path: "/calendar",
-      icon: <Calendar className="h-5 w-5" />,
-    },
-    {
-      name: "Profile",
-      path: "/profile/edit",
-      icon: <User className="h-5 w-5" />,
-    },
+    { name: "Dashboard", path: "/dashboard", icon: <Home className="h-5 w-5" /> },
+    { name: "Find Match", path: "/match", icon: <Heart className="h-5 w-5" /> },
+    { name: "RooChat", path: "/chat", icon: <MessageCircle className="h-5 w-5" /> },
+    { name: "Calendar", path: "/calendar", icon: <Calendar className="h-5 w-5" /> },
+    { name: "Profile", path: "/profile/edit", icon: <User className="h-5 w-5" /> },
   ]
 
   return (
@@ -56,7 +53,6 @@ export default function DashboardNav() {
           <span>RoomMatch</span>
         </div>
 
-        {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6">
           {routes.map((route) => (
             <Link
@@ -77,8 +73,11 @@ export default function DashboardNav() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src="/placeholder.svg?height=32&width=32&text=AJ" alt="User" />
-                  <AvatarFallback>AJ</AvatarFallback>
+                  <AvatarImage
+                    src={profileImage || "/placeholder.svg"}
+                    alt="User"
+                  />
+                  <AvatarFallback>RM</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
@@ -107,7 +106,6 @@ export default function DashboardNav() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Mobile Menu */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden">

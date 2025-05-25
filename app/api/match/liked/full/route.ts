@@ -7,7 +7,6 @@ import mongoose from "mongoose"
 export async function GET() {
   try {
     await connectToDatabase()
-
     const cookieStore = await cookies()
     const userEmail = cookieStore.get("userEmail")?.value
 
@@ -15,31 +14,19 @@ export async function GET() {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
     }
 
-    const currentUser = await Profile.findOne({ email: userEmail })
+    const user = await Profile.findOne({ email: userEmail })
 
-    if (!currentUser) {
+    if (!user) {
       return NextResponse.json({ success: false, error: "User not found" }, { status: 404 })
     }
 
-    const oppositeType = currentUser.userType === "renter" ? "landlord" : "renter"
+    const likedIds = (user.likedProfiles || []).map((id: string) => new mongoose.Types.ObjectId(id))
 
-    // Convert all excluded profile IDs to ObjectId
-    const excludedIds = [
-      ...(currentUser.likedProfiles || []),
-      ...(currentUser.dislikedProfiles || [])
-    ].map(id => new mongoose.Types.ObjectId(id))
+    const likedProfiles = await Profile.find({ _id: { $in: likedIds } })
 
-    const matches = await Profile.find({
-  userType: oppositeType,
-  _id: {
-    $nin: [...excludedIds, currentUser._id]  // Exclude self
-  }
-})
-
-
-    return NextResponse.json({ success: true, matches })
+    return NextResponse.json({ success: true, profiles: likedProfiles })
   } catch (err) {
-    console.error("Match fetch error:", err)
+    console.error("Fetch liked full profiles error:", err)
     return NextResponse.json({ success: false, error: "Server error" }, { status: 500 })
   }
 }

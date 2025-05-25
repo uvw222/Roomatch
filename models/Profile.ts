@@ -6,7 +6,7 @@ const ProfileSchema = new mongoose.Schema({
     enum: ["renter", "landlord"],
     required: true,
   },
-  email: { type: String, required: true, unique: true }, // ✅ Add this
+  email: { type: String, required: true, unique: true },
   name: String,
   age: Number,
   gender: String,
@@ -29,6 +29,16 @@ const ProfileSchema = new mongoose.Schema({
     genderPreference: String,
     petsAllowed: Boolean,
     smokingAllowed: Boolean,
+  },
+
+  // ✅ Matching system
+  likedProfiles: {
+    type: [String],
+    default: [],
+  },
+  dislikedProfiles: {
+    type: [String],
+    default: [],
   },
 });
 
