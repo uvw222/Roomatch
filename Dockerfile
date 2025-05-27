@@ -23,4 +23,6 @@ RUN pnpm build
 EXPOSE 3000
 
 # Define the command to run your application
-CMD ["pnpm", "start"]
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+CMD ["/start.sh"]
