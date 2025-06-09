@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -20,6 +20,12 @@ export default function DashboardNav() {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
   const [profileImage, setProfileImage] = useState("")
+const router = useRouter()
+
+const handleLogout = async () => {
+  await fetch("/api/logout", { method: "POST" })
+  router.push("/login")
+}
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -97,12 +103,11 @@ export default function DashboardNav() {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/" className="cursor-pointer text-red-500">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </Link>
-              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout} className="text-red-500 cursor-pointer">
+  <LogOut className="mr-2 h-4 w-4" />
+  <span>Log out</span>
+</DropdownMenuItem>
+
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -132,14 +137,17 @@ export default function DashboardNav() {
                       {route.name}
                     </Link>
                   ))}
-                  <Link
-                    href="/"
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3 text-sm font-medium text-red-500 mt-4"
-                  >
-                    <LogOut className="h-5 w-5" />
-                    Log out
-                  </Link>
+                  <button
+  onClick={() => {
+    setIsOpen(false)
+    handleLogout()
+  }}
+  className="flex items-center gap-3 text-sm font-medium text-red-500 mt-4"
+>
+  <LogOut className="h-5 w-5" />
+  Log out
+</button>
+
                 </nav>
               </div>
             </SheetContent>
