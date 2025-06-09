@@ -1,32 +1,25 @@
-// app/api/register/route.ts
-
 import { NextResponse } from "next/server"
-import connectToDatabase from "@/lib/mongodb"
-import bcrypt from "bcryptjs" // you’ll need to install this
+import { getCollection } from "@/lib/db"
+import bcrypt from "bcryptjs"
 
 export async function POST(req: Request) {
   try {
     const body = await req.json()
     const { name, email, password, userType } = body
 
-    // ✅ Basic Validation
     if (!name || !email || !password || !userType) {
       return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 })
     }
 
-    const db = (await connectToDatabase()).connection.db
-    const profiles = db.collection("profiles")
+    const profiles = await getCollection("profiles")
 
-    // ✅ Check for existing user
     const existing = await profiles.findOne({ email })
     if (existing) {
       return NextResponse.json({ success: false, error: "Email already in use" }, { status: 400 })
     }
 
-    // ✅ Hash the password (recommended before storing)
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    // ✅ Insert new profile with defaults
     const result = await profiles.insertOne({
       name,
       email,
