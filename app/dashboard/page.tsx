@@ -4,19 +4,44 @@ import { MessageCircle, Calendar, User, Home, Heart } from "lucide-react"
 import Link from "next/link"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
+import { getCollection } from "@/lib/db"
+import { ObjectId } from "mongodb"
 
-export default async  function DashboardPage() {
+export default async function DashboardPage() {
   const cookieStore = await cookies()
-  const email = cookieStore.get("user_email")?.value
+const email = cookieStore.get("user_email")?.value
 
   if (!email) {
     redirect("/login")
   }
+
+  const profiles = await getCollection("profiles")
+  const profile = await profiles.findOne({ email })
+if (!profile) {
+    redirect("/login") // just in case email is stale or user was deleted
+  }
+  const myIdString = profile._id.toString();          // convert my ObjectId to string
+const likedObjectIds = (profile.likedProfiles || [])
+  .map((id: string) => new ObjectId(id));           // convert my likes to ObjectIds
+
+const mutualMatches = await profiles.find({
+  likedProfiles: myIdString,                       // they liked me (stored as string)
+  _id: { $in: likedObjectIds }                     // I liked them (converted to ObjectIds)
+}).toArray();
+
+const matchCount = mutualMatches.length
+const messagesCol = await getCollection("messages")
+const unreadCount = await messagesCol.countDocuments({ to: email, read: false })
+
+console.log("Profile ID:", profile._id)
+console.log("Liked profiles:", profile.likedProfiles)
+console.log("Converted liked profiles:", likedObjectIds)
+console.log("Match count:", mutualMatches.length)
   return (
     <div className="container px-4 py-6 md:py-10">
       <div className="flex flex-col gap-4 md:gap-8">
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold">Welcome back, Alex!</h1>
+          <h1 className="text-3xl font-bold">Welcome back, {profile.name}!</h1>
           <p className="text-gray-500 dark:text-gray-400">Here's what's happening with your roommate search</p>
         </div>
 
@@ -27,8 +52,8 @@ export default async  function DashboardPage() {
               <User className="h-4 w-4 text-gray-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">24</div>
-              <p className="text-xs text-gray-500">+12% from last week</p>
+              <div className="text-2xl font-bold">{profile.views ?? 0}</div>
+              
             </CardContent>
           </Card>
           <Card>
@@ -37,8 +62,8 @@ export default async  function DashboardPage() {
               <Heart className="h-4 w-4 text-orange-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">7</div>
-              <p className="text-xs text-gray-500">+3 new matches</p>
+              <div className="text-2xl font-bold">{matchCount}</div>
+              <p className="text-xs text-gray-500"></p>
             </CardContent>
           </Card>
           <Card>
@@ -47,8 +72,8 @@ export default async  function DashboardPage() {
               <MessageCircle className="h-4 w-4 text-gray-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">12</div>
-              <p className="text-xs text-gray-500">5 unread messages</p>
+              <div className="text-2xl font-bold">{unreadCount}</div>
+              <p className="text-xs text-gray-500">unread messages</p>
             </CardContent>
           </Card>
           <Card>

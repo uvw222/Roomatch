@@ -25,7 +25,18 @@ export async function GET() {
       );
     }
 
-    return NextResponse.json({ success: true, profile }, { status: 200 });
+    return NextResponse.json({
+      success: true,
+      profile: {
+        name: profile.name,
+        age: profile.age,
+        occupation: profile.occupation,
+        location: profile.location,
+        bio: profile.bio,
+        profileImage: profile.profileImage || "",
+      },
+    }, { status: 200 });
+
   } catch (error) {
     console.error("Error fetching profile:", error);
     return NextResponse.json(

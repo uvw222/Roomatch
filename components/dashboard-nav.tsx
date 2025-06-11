@@ -32,6 +32,7 @@ const handleLogout = async () => {
       try {
         const res = await fetch("/api/profile/me")
         const data = await res.json()
+        console.log("Profile fetched:", data)
         if (data.success) {
           setProfileImage(data.profile?.profileImage || "")
         }

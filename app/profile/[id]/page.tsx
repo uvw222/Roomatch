@@ -10,18 +10,21 @@ type ProfileType = {
   occupation: string
   location: string
   budget: number
+  views: number
 }
 
-export default async function ProfilePage({ params }: { params: { id: string } }) {
+export default async function ProfilePage(props: { params: { id: string } }) {
+  const { id } = props.params;
   await connectToDatabase()
+  await Profile.findByIdAndUpdate(id, { $inc: { views: 1 } })
+  const rawProfile = await Profile.findById(id).lean()
 
-  const rawProfile = await Profile.findById(params.id).lean()
 
   if (!rawProfile) return notFound()
 
   // ✅ Safely cast only after confirming it exists
   const profile = rawProfile as unknown as ProfileType
-
+console.log(" Profile views (after update):", profile.views)
   return (
     <div className="container py-10">
       <h1 className="text-2xl font-bold mb-2">{profile.name}</h1>
