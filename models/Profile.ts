@@ -31,7 +31,7 @@ const ProfileSchema = new mongoose.Schema({
     smokingAllowed: Boolean,
   },
 
-  // ✅ Matching system
+  //  Matching system
   likedProfiles: {
     type: [String],
     default: [],
@@ -39,6 +39,14 @@ const ProfileSchema = new mongoose.Schema({
   dislikedProfiles: {
     type: [String],
     default: [],
+  },
+  views: {
+  type: Number,
+  default: 0,
+},
+  createdAt: {
+    type: Date,
+    default: Date.now,
   },
 });
 

@@ -1,8 +1,9 @@
 "use client"
+
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { useRouter } from "next/navigation"
 
 type Profile = {
   name: string
@@ -24,14 +25,22 @@ export default function EditProfilePage() {
   })
 
   const [newImage, setNewImage] = useState<File | null>(null)
+  const [errors, setErrors] = useState<{ [key: string]: string }>({})
   const router = useRouter()
 
   useEffect(() => {
     fetch("/api/profile/me")
       .then((res) => res.json())
       .then((data) => {
-        if (data.success) {
-          setProfile(data.profile)
+        if (data.success && data.profile) {
+          setProfile({
+            name: data.profile.name ?? "",
+            age: data.profile.age ?? 0,
+            occupation: data.profile.occupation ?? "",
+            location: data.profile.location ?? "",
+            bio: data.profile.bio ?? "",
+            profileImage: data.profile.profileImage ?? "",
+          })
         }
       })
   }, [])
@@ -49,12 +58,26 @@ export default function EditProfilePage() {
   }
 
   const handleSubmit = async () => {
+    const newErrors: { [key: string]: string } = {}
+
+    if (!profile.name.trim()) newErrors.name = "Name is required"
+    if (!profile.age || Number(profile.age) <= 0) newErrors.age = "Age must be greater than 0"
+    if (!profile.location.trim()) newErrors.location = "Location is required"
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      return
+    }
+
+    setErrors({})
+
     const formData = new FormData()
     formData.append("name", profile.name)
-    formData.append("age", profile.age.toString())
+    formData.append("age", String(profile.age))
     formData.append("occupation", profile.occupation)
     formData.append("location", profile.location)
     formData.append("bio", profile.bio)
+
     if (newImage) {
       formData.append("profileImage", newImage)
     }
@@ -66,7 +89,7 @@ export default function EditProfilePage() {
 
     const data = await res.json()
     if (data.success) {
-      router.push("/dashboard") // Or show a toast
+      router.push("/dashboard")
     } else {
       alert("Error updating profile")
     }
@@ -84,18 +107,46 @@ export default function EditProfilePage() {
               ? URL.createObjectURL(newImage)
               : profile.profileImage || "/placeholder.svg"
           }
-          alt="Profile Preview"
+          alt="Profile"
           className="w-32 h-32 rounded-full object-cover mx-auto border"
         />
         <Input type="file" accept="image/*" className="mt-2" onChange={handleFileChange} />
       </div>
 
-      {/* Other Inputs */}
+      {/* Form Fields */}
       <div className="space-y-4">
-        <Input name="name" value={profile.name} onChange={handleChange} placeholder="Name" />
-        <Input name="age" type="number" value={profile.age} onChange={handleChange} placeholder="Age" />
-        <Input name="occupation" value={profile.occupation} onChange={handleChange} placeholder="Occupation" />
-        <Input name="location" value={profile.location} onChange={handleChange} placeholder="Location" />
+        <Input
+          name="name"
+          value={profile.name}
+          onChange={handleChange}
+          placeholder="Name"
+        />
+        {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
+
+        <Input
+          name="age"
+          type="number"
+          value={profile.age}
+          onChange={handleChange}
+          placeholder="Age"
+        />
+        {errors.age && <p className="text-red-500 text-sm">{errors.age}</p>}
+
+        <Input
+          name="occupation"
+          value={profile.occupation}
+          onChange={handleChange}
+          placeholder="Occupation"
+        />
+
+        <Input
+          name="location"
+          value={profile.location}
+          onChange={handleChange}
+          placeholder="Location"
+        />
+        {errors.location && <p className="text-red-500 text-sm">{errors.location}</p>}
+
         <textarea
           name="bio"
           value={profile.bio}
@@ -103,6 +154,7 @@ export default function EditProfilePage() {
           placeholder="Bio"
           className="w-full border p-2 rounded"
         />
+
         <Button className="w-full mt-4" onClick={handleSubmit}>
           Save Changes
         </Button>

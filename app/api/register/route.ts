@@ -32,6 +32,7 @@ export async function POST(req: Request) {
       location: "",
       hasPets: false,
       isSmoker: false,
+      views: 0,
       lifestyle: {
         cleanliness: 50,
         noise: 50,
