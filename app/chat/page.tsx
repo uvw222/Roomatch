@@ -9,7 +9,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, User } from "lucide-react";
 import InitSocket from "@/components/InitSocket"; // ✅ ADDED
 
-const bottomRef = useRef<HTMLDivElement | null>(null);
 
 /* ---------- Types ---------- */
 
@@ -49,6 +48,7 @@ async function fetchConversation(otherEmail: string): Promise<ServerMessage[]> {
 /* ---------- Chat Page ---------- */
 
 export default function ChatPage() {
+  const bottomRef = useRef<HTMLDivElement | null>(null);
   const [myEmail, setMyEmail] = useState<string>("");
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
