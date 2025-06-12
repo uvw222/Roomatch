@@ -181,26 +181,30 @@ useEffect(() => {
               {/* Message list */}
               <ScrollArea className="flex-1 p-4 chat-content-area">
                 <div className="space-y-4">
-                  {messages.map((m, idx) => (
-  <div
-    key={m._id}
-    className={`flex ${m.from === myEmail ? "justify-end" : "justify-start"}`}
-    ref={idx === messages.length - 1 ? bottomRef : null}
-  >
+                  {messages.map((m, idx) => {
+  const isMyMessage = m.from.toLowerCase() === myEmail.toLowerCase();
+  return (
     <div
-      className={`max-w-[70%] rounded-lg p-3 ${
-        m.from === myEmail ? "bg-orange-600 text-white" : "bg-gray-100 dark:bg-gray-800"
-      }`}
+      key={m._id}
+      className={`flex ${isMyMessage ? "justify-end" : "justify-start"}`}
+      ref={idx === messages.length - 1 ? bottomRef : null}
     >
-      <p>{m.text}</p>
-      <p className={`text-xs mt-1 ${
-        m.from === myEmail ? "text-orange-100" : "text-gray-500"
-      }`}>
-        {new Date(m.timestamp).toLocaleTimeString()}
-      </p>
+      <div
+        className={`max-w-[70%] rounded-lg p-3 ${
+          isMyMessage
+            ? "bg-orange-600 text-white"
+            : "bg-gray-100 dark:bg-gray-800 text-black dark:text-white"
+        }`}
+      >
+        <p>{m.text}</p>
+        <p className={`text-xs mt-1 ${isMyMessage ? "text-orange-100" : "text-gray-500"}`}>
+          {new Date(m.timestamp).toLocaleTimeString()}
+        </p>
+      </div>
     </div>
-  </div>
-))}
+  );
+})}
+
 
                 </div>
               </ScrollArea>
