@@ -9,7 +9,7 @@ COPY package.json pnpm-lock.yaml ./
 
 # Install pnpm globally
 RUN npm install -g pnpm
-
+RUN pnpm set registry https://registry.npmmirror.com
 # Install dependencies using pnpm
 RUN pnpm install --frozen-lockfile
 
