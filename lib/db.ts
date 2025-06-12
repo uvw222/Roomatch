@@ -1,3 +1,5 @@
+
+//lib/db.ts
 import mongoose from "mongoose";
 import type { Collection, Document } from "mongodb";
 import connectToDatabase from "./mongodb";
