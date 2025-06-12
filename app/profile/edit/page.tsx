@@ -85,6 +85,7 @@ export default function EditProfilePage() {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/update`, {
       method: "POST",
       body: formData,
+      credentials: "include",
     })
 
     const data = await res.json()
