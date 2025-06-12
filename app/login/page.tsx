@@ -1,3 +1,5 @@
+
+//app/login/page.tsx
 "use client"
 
 import type React from "react"
@@ -33,6 +35,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault()
   setIsLoading(true)
+console.log("ENV API URL:", process.env.NEXT_PUBLIC_API_URL);
 
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/login`, {
