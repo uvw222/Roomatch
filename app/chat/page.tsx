@@ -182,7 +182,7 @@ useEffect(() => {
               <ScrollArea className="flex-1 p-4 chat-content-area">
                 <div className="space-y-4">
                   {messages.map((m, idx) => {
-  const isMyMessage = m.from.toLowerCase() === myEmail.toLowerCase();
+  const isMyMessage = m.from?.toLowerCase() === myEmail?.toLowerCase();
   return (
     <div
       key={m._id}
