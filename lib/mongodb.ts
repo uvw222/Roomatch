@@ -1,10 +1,5 @@
+//./lib/mongodb.ts
 import mongoose from "mongoose"
-
-const MONGODB_URI = process.env.MONGODB_URI
-
-if (!MONGODB_URI) {
-  throw new Error("Please define the MONGODB_URI environment variable in .env.local")
-}
 
 // This creates a custom global type only for this script
 let cached = (global as any).mongoose
@@ -14,11 +9,15 @@ if (!cached) {
 }
 
 async function connectToDatabase() {
+  const MONGODB_URI = process.env.MONGODB_URI;
+  if (!MONGODB_URI) {
+  throw new Error("Please define the MONGODB_URI environment variable in .env.local")
+}
   if (cached.conn) return cached.conn
 
   if (!cached.promise) {
     cached.promise = mongoose.connect(MONGODB_URI!, {
-      dbName: "roomatch", // your Azure Cosmos DB name
+      dbName: "roomatch", 
     })
   }
 
