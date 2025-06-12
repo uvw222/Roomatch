@@ -1,6 +1,5 @@
 // components/ChatWindow.tsx
 import { useConversation } from "@/hooks/useConversation";
-import { bubbleClasses } from "@/lib/bubbleClasses";
 import { useEffect } from "react";
 
 export default function ChatWindow({
@@ -21,14 +20,21 @@ export default function ChatWindow({
       }).then(() => mutate());
     }
   }, [messages, meEmail, otherEmail, mutate]);
-
   return (
-    <div className="flex flex-col gap-1">
-      {messages.map((m: any) => (
-        <div key={m._id} className={bubbleClasses(m.from === meEmail, m.read)}>
-          {m.text}
-        </div>
-      ))}
-    </div>
-  );
+  <div className="max-h-[60vh] overflow-y-auto px-2 flex flex-col gap-1">
+    {messages.map((m: any) => (
+      <div
+        key={m._id}
+        className={`max-w-[70%] px-4 py-2 rounded-lg text-white break-words ${
+          m.from === meEmail
+            ? "bg-orange-500 self-end text-right"
+            : "bg-gray-400 self-start text-left"
+        }`}
+      >
+        {m.text}
+      </div>
+    ))}
+  </div>
+);
+
 }
