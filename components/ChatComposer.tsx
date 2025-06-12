@@ -11,7 +11,7 @@ export default function ChatComposer({
   const handleSend = async () => {
     if (!text.trim()) return;
 
-    await fetch("/api/messages/send", {
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages/send`, {
       method: "POST",
       body: JSON.stringify({ to: otherEmail, text }),
     });

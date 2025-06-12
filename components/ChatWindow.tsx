@@ -15,7 +15,7 @@ export default function ChatWindow({
   /* mark partner’s messages read */
   useEffect(() => {
     if (messages.some((m: any) => m.to === meEmail && !m.read)) {
-      fetch("/api/messages/mark-read", {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages/mark-read`, {
         method: "POST",
         body: JSON.stringify({ other: otherEmail }),
       }).then(() => mutate());

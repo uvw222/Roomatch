@@ -23,14 +23,14 @@ export default function DashboardNav() {
 const router = useRouter()
 
 const handleLogout = async () => {
-  await fetch("/api/logout", { method: "POST" })
+  await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/logout`, { method: "POST" })
   router.push("/login")
 }
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch("/api/profile/me")
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/me`)
         const data = await res.json()
         console.log("Profile fetched:", data)
         if (data.success) {

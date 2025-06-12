@@ -29,7 +29,7 @@ export default function EditProfilePage() {
   const router = useRouter()
 
   useEffect(() => {
-    fetch("/api/profile/me")
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/me`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.profile) {
@@ -82,7 +82,7 @@ export default function EditProfilePage() {
       formData.append("profileImage", newImage)
     }
 
-    const res = await fetch("/api/profile/update", {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/update`, {
       method: "POST",
       body: formData,
     })

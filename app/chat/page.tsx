@@ -32,13 +32,13 @@ type ServerMessage = {
 /* ---------- Helper fetchers ---------- */
 
 async function fetchContacts(): Promise<Contact[]> {
-  const res = await fetch("/api/messages/list?mode=contacts");
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages/list?mode=contacts`);
   const data = await res.json();
   return data.success ? (data.contacts as Contact[]) : [];
 }
 
 async function fetchConversation(otherEmail: string): Promise<ServerMessage[]> {
-  const res = await fetch(`/api/messages/list?mode=conversation&other=${encodeURIComponent(otherEmail)}`);
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages/list?mode=conversation&other=${encodeURIComponent(otherEmail)}`);
   const data = await res.json();
   return data.success ? (data.messages as ServerMessage[]) : [];
 }
@@ -54,7 +54,7 @@ export default function ChatPage() {
 
   useEffect(() => {
     const init = async () => {
-      const meRes = await fetch("/api/profile/me");
+      const meRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/me`);
       const meData = await meRes.json();
       if (!meData.success) return;
       setMyEmail(meData.profile.email);
@@ -80,7 +80,7 @@ export default function ChatPage() {
       .map((m) => m._id);
 
     if (unreadIds.length) {
-      await fetch("/api/messages/mark-read", {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages/mark-read`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messageIds: unreadIds }),
@@ -92,7 +92,7 @@ export default function ChatPage() {
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedContact) return;
 
-    await fetch("/api/messages/send", {
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

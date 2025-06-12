@@ -42,7 +42,7 @@ export default function MatchPage() {
 
   const fetchMatches = async () => {
     try {
-      const res = await fetch("/api/matches")
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/matches`)
       const data = await res.json()
       if (data.success) {
         setProfiles(data.matches)
@@ -57,7 +57,7 @@ export default function MatchPage() {
 
   const fetchLikedMatches = async () => {
     try {
-      const res = await fetch("/api/match/liked/full")
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/match/liked/full`)
       const data = await res.json()
       if (data.success) {
         setLikedProfiles(data.profiles)
@@ -73,7 +73,7 @@ export default function MatchPage() {
     setDirection(direction)
 
     const targetId = currentProfile._id
-    const endpoint = direction === "right" ? "/api/match/like" : "/api/match/dislike"
+    const endpoint = direction === "right" ? `${process.env.NEXT_PUBLIC_API_URL}/api/match/like` : `${process.env.NEXT_PUBLIC_API_URL}/api/match/dislike`
 
     await fetch(endpoint, {
       method: "POST",

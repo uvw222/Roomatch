@@ -6,7 +6,7 @@ export function getSocketClient(meEmail: string) {
   if (socket) return socket;
   console.log("[getSocketClient] Connecting socket..."); // ✅ add this
 
-  fetch("/api/socket").catch(() => {
+  fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/socket`).catch(() => {
     console.warn("Failed to boot socket server");
   });
 
