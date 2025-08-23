@@ -66,11 +66,27 @@ export default function LoginPage() {
 }
 
   return (
-    <div className="flex mobile-height-screen flex-col items-center justify-center px-4 pt-safe pb-safe">
-      <Link href="/" className="absolute left-4 top-4 md:left-8 md:top-8 flex items-center gap-2 font-bold">
-        <Home className="h-5 w-5 text-orange-500" />
-        <span>RoomMatch</span>
-      </Link>
+    <div className="flex flex-col mobile-height-screen">
+      <header className="border-b pt-safe">
+        <div className="container flex h-16 items-center justify-between px-4">
+          <Link href="/" className="flex items-center gap-2 font-bold text-xl hover:opacity-80 transition-opacity">
+            <Home className="h-5 w-5 text-orange-500" />
+            <span>RoomMatch</span>
+          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/login">
+              <Button size="sm">
+                Login
+              </Button>
+            </Link>
+            <Link href="/register">
+              <Button variant="ghost" size="sm">Sign Up</Button>
+            </Link>
+          </div>
+        </div>
+      </header>
+      
+      <main className="flex-1 flex items-center justify-center px-4 pb-safe">
 
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
@@ -134,6 +150,7 @@ export default function LoginPage() {
           </p>
         </CardFooter>
       </Card>
+      </main>
     </div>
   )
 }

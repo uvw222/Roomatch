@@ -7,10 +7,10 @@ export default function HomePage() {
     <div className="flex flex-col mobile-height-screen">
       <header className="border-b pt-safe">
         <div className="container flex h-16 items-center justify-between px-4">
-          <div className="flex items-center gap-2 font-bold text-xl">
+          <Link href="/" className="flex items-center gap-2 font-bold text-xl hover:opacity-80 transition-opacity">
             <Home className="h-5 w-5 text-orange-500" />
             <span>RoomMatch</span>
-          </div>
+          </Link>
           <div className="flex items-center gap-4">
             <Link href="/login">
               <Button variant="ghost" size="sm">

@@ -7,7 +7,7 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
   const pathname = usePathname()
 
   // Hide nav on these routes
-  const hideOnPaths = ["/", "/login", "/signup"]
+  const hideOnPaths = ["/", "/login", "/register"]
   const showDashboardNav = !hideOnPaths.includes(pathname ?? "") // ✅ handles null safely
 
   return (
