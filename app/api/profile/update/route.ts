@@ -23,6 +23,14 @@ export async function POST(req: NextRequest) {
     const occupation = formData.get("occupation")?.toString() || "";
     const location = formData.get("location")?.toString() || "";
     const bio = formData.get("bio")?.toString() || "";
+    
+    // Handle coordinates
+    const latitude = formData.get("latitude")?.toString();
+    const longitude = formData.get("longitude")?.toString();
+    const coordinates = latitude && longitude ? {
+      latitude: Number(latitude),
+      longitude: Number(longitude)
+    } : undefined;
 
     let imageUrl = "";
 
@@ -50,6 +58,7 @@ export async function POST(req: NextRequest) {
         occupation,
         location,
         bio,
+        ...(coordinates && { coordinates }),
       },
     };
 

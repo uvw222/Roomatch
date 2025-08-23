@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import connectToDatabase from "@/lib/mongodb"
 import Profile from "@/models/Profile"
+import GoogleMap from "@/components/GoogleMap"
 
 type ProfileType = {
   _id: string
@@ -9,6 +10,10 @@ type ProfileType = {
   profileImage: string
   occupation: string
   location: string
+  coordinates?: {
+    latitude: number
+    longitude: number
+  }
   budget: number
   views: number
 }
@@ -33,6 +38,18 @@ console.log(" Profile views (after update):", profile.views)
       <p>Occupation: {profile.occupation}</p>
       <p>Location: {profile.location}</p>
       <p>Budget: ${profile.budget}</p>
+      
+      {profile.coordinates && (
+        <div className="mt-6">
+          <h3 className="text-lg font-semibold mb-2">Location</h3>
+          <GoogleMap 
+            latitude={profile.coordinates.latitude}
+            longitude={profile.coordinates.longitude}
+            height="300px"
+            className="mb-4"
+          />
+        </div>
+      )}
     </div>
   )
 }

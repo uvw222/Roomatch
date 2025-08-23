@@ -15,6 +15,11 @@ const ProfileSchema = new mongoose.Schema({
   budget: Number,
   moveInDate: String,
   location: String,
+  // Add coordinates for Google Maps
+  coordinates: {
+    latitude: Number,
+    longitude: Number,
+  },
   hasPets: Boolean,
   isSmoker: Boolean,
   profileImage: String,

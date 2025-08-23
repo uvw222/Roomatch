@@ -5,6 +5,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import ViewportHandler from "@/components/viewport-handler"
 import LayoutShell from "@/components/layout-shell"
+import CurrentLocationDetector from "@/components/CurrentLocationDetector"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
@@ -36,16 +37,17 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="h-full">
+    <html lang="en" className="h-full" suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
-      <body className={`${inter.className} h-full overflow-x-hidden`}>
+      <body className={`${inter.className} h-full overflow-x-hidden`} suppressHydrationWarning>
         <ThemeProvider defaultTheme="light" disableTransitionOnChange>
           <ViewportHandler />
+          <CurrentLocationDetector />
           <LayoutShell>{children}</LayoutShell>
         </ThemeProvider>
       </body>

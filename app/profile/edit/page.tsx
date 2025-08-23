@@ -4,12 +4,17 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import LocationPicker from "@/components/LocationPicker"
 
 type Profile = {
   name: string
   age: number
   occupation: string
   location: string
+  coordinates?: {
+    latitude: number
+    longitude: number
+  }
   bio: string
   profileImage?: string
 }
@@ -20,6 +25,7 @@ export default function EditProfilePage() {
     age: 0,
     occupation: "",
     location: "",
+    coordinates: undefined,
     bio: "",
     profileImage: "",
   })
@@ -38,9 +44,30 @@ export default function EditProfilePage() {
             age: data.profile.age ?? 0,
             occupation: data.profile.occupation ?? "",
             location: data.profile.location ?? "",
+            coordinates: data.profile.coordinates,
             bio: data.profile.bio ?? "",
             profileImage: data.profile.profileImage ?? "",
           })
+        }
+        
+        // If no location is set, try to use detected location
+        if (!data.profile?.location) {
+          const storedLocation = localStorage.getItem('userLocation')
+          if (storedLocation) {
+            try {
+              const locationData = JSON.parse(storedLocation)
+              setProfile(prev => ({
+                ...prev,
+                location: locationData.location,
+                coordinates: {
+                  latitude: locationData.latitude,
+                  longitude: locationData.longitude
+                }
+              }))
+            } catch (error) {
+              console.error('Error parsing stored location:', error)
+            }
+          }
         }
       })
   }, [])
@@ -77,6 +104,11 @@ export default function EditProfilePage() {
     formData.append("occupation", profile.occupation)
     formData.append("location", profile.location)
     formData.append("bio", profile.bio)
+
+    if (profile.coordinates) {
+      formData.append("latitude", String(profile.coordinates.latitude))
+      formData.append("longitude", String(profile.coordinates.longitude))
+    }
 
     if (newImage) {
       formData.append("profileImage", newImage)
@@ -140,12 +172,21 @@ export default function EditProfilePage() {
           placeholder="Occupation"
         />
 
-        <Input
-          name="location"
-          value={profile.location}
-          onChange={handleChange}
-          placeholder="Location"
-        />
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Location</label>
+          <LocationPicker
+            onLocationSelect={(location: string, latitude: number, longitude: number) => {
+              setProfile(prev => ({
+                ...prev,
+                location,
+                coordinates: { latitude, longitude }
+              }))
+            }}
+            initialLocation={profile.location}
+            initialLatitude={profile.coordinates?.latitude}
+            initialLongitude={profile.coordinates?.longitude}
+          />
+        </div>
         {errors.location && <p className="text-red-500 text-sm">{errors.location}</p>}
 
         <textarea

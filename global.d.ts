@@ -4,6 +4,11 @@ import type { Server as IOServer } from "socket.io";
 declare global {
   // eslint-disable-next-line no-var
   var _io: IOServer | undefined;
+  
+  // Google Maps types
+  interface Window {
+    google: typeof google;
+  }
 }
 
 /* Ensures this file is a module */
