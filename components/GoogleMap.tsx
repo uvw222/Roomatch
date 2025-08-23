@@ -15,7 +15,7 @@ interface GoogleMapProps {
 export default function GoogleMap({ 
   latitude, 
   longitude, 
-  zoom = 15, 
+  zoom = 18, 
   height = "300px", 
   width = "100%",
   className = ""

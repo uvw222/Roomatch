@@ -41,7 +41,7 @@ export default function LocationPicker({
 
         const newMap = new google.maps.Map(mapRef.current, {
           center: defaultPosition,
-          zoom: 13,
+          zoom: 16,
           mapTypeId: google.maps.MapTypeId.ROADMAP,
           mapTypeControl: false,
           streetViewControl: false,
@@ -71,7 +71,7 @@ export default function LocationPicker({
             const lng = place.geometry.location.lng()
             
             newMap.setCenter({ lat, lng })
-            newMap.setZoom(15)
+            newMap.setZoom(18)
 
             // Update or create marker
             if (marker) {
