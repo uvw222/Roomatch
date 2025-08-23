@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Calendar, Heart, Home, LogOut, Menu, MessageCircle, Settings, User } from "lucide-react"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export default function DashboardNav() {
   const pathname = usePathname()
@@ -76,6 +77,7 @@ const handleLogout = async () => {
         </nav>
 
         <div className="flex items-center gap-4">
+          <ThemeToggle />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">

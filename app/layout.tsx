@@ -45,7 +45,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
       <body className={`${inter.className} h-full overflow-x-hidden`} suppressHydrationWarning>
-        <ThemeProvider defaultTheme="light" disableTransitionOnChange>
+        <ThemeProvider>
           <ViewportHandler />
           <CurrentLocationDetector />
           <LayoutShell>{children}</LayoutShell>
