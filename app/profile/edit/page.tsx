@@ -35,6 +35,7 @@ export default function EditProfilePage() {
     bio: "",
     profileImage: "",
   })
+  const [isNewUser, setIsNewUser] = useState(false)
 
   const [newImage, setNewImage] = useState<File | null>(null)
   const [croppedImage, setCroppedImage] = useState<File | null>(null)
@@ -45,62 +46,72 @@ export default function EditProfilePage() {
   const { refreshProfile } = useProfile()
 
   useEffect(() => {
-    if (globalProfile) {
-      // For existing users - use their saved profile data
-      console.log('Loading existing profile data:', globalProfile)
-      setProfile({
-        name: globalProfile.name ?? "",
-        age: globalProfile.age ?? 0,
-        occupation: globalProfile.occupation ?? "",
-        location: globalProfile.location ?? "",
-        coordinates: globalProfile.coordinates,
-        bio: globalProfile.bio ?? "",
-        profileImage: globalProfile.profileImage ?? "",
-      })
-      
-
-    } else {
-      // For new users or when profile doesn't exist - use current location
-      const storedLocation = localStorage.getItem('userLocation')
-      if (storedLocation) {
-        try {
-          const locationData = JSON.parse(storedLocation)
-
-          setProfile(prev => ({
-            ...prev,
-            location: locationData.location,
-            coordinates: {
-              latitude: locationData.latitude,
-              longitude: locationData.longitude
+    if (!profileLoading) {
+      if (globalProfile && globalProfile.name) {
+        // Existing user with profile data
+        setIsNewUser(false)
+        setProfile({
+          name: globalProfile.name ?? "",
+          age: globalProfile.age ?? 0,
+          occupation: globalProfile.occupation ?? "",
+          location: globalProfile.location ?? "",
+          coordinates: globalProfile.coordinates,
+          bio: globalProfile.bio ?? "",
+          profileImage: globalProfile.profileImage ?? "",
+        })
+        
+        // If existing user doesn't have location, add current location
+        if (!globalProfile.location) {
+          const storedLocation = localStorage.getItem('userLocation')
+          if (storedLocation) {
+            try {
+              const locationData = JSON.parse(storedLocation)
+              setProfile(prev => ({
+                ...prev,
+                location: locationData.location,
+                coordinates: {
+                  latitude: locationData.latitude,
+                  longitude: locationData.longitude
+                }
+              }))
+            } catch (error) {
+              console.error('Error parsing stored location:', error)
             }
-          }))
-        } catch (error) {
-          console.error('Error parsing stored location:', error)
+          }
+        }
+      } else {
+        // New user - start with empty profile and current location
+        setIsNewUser(true)
+        setProfile({
+          name: "",
+          age: 0,
+          occupation: "",
+          location: "",
+          coordinates: undefined,
+          bio: "",
+          profileImage: "",
+        })
+        
+        // Set current location for new users
+        const storedLocation = localStorage.getItem('userLocation')
+        if (storedLocation) {
+          try {
+            const locationData = JSON.parse(storedLocation)
+            setProfile(prev => ({
+              ...prev,
+              location: locationData.location,
+              coordinates: {
+                latitude: locationData.latitude,
+                longitude: locationData.longitude
+              }
+            }))
+          } catch (error) {
+            console.error('Error parsing stored location:', error)
+          }
         }
       }
     }
-    
-    // Additional check: If user has profile but no location, use detected location
-    if (globalProfile && !globalProfile.location) {
-      const storedLocation = localStorage.getItem('userLocation')
-      if (storedLocation) {
-        try {
-          const locationData = JSON.parse(storedLocation)
-
-          setProfile(prev => ({
-            ...prev,
-            location: locationData.location,
-            coordinates: {
-              latitude: locationData.latitude,
-              longitude: locationData.longitude
-            }
-          }))
-        } catch (error) {
-          console.error('Error parsing stored location:', error)
-        }
-      }
-    }
-  }, [globalProfile])
+  }, [globalProfile, profileLoading])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -238,7 +249,9 @@ export default function EditProfilePage() {
 
   return (
     <div className="max-w-xl mx-auto py-10 px-4">
-      <h1 className="text-2xl font-bold mb-6">Edit Your Profile</h1>
+      <h1 className="text-2xl font-bold mb-6">
+        {isNewUser ? "Complete Your Profile" : "Edit Your Profile"}
+      </h1>
 
       {/* Success Message */}
       {successMessage && (

@@ -48,7 +48,17 @@ export async function POST(req: Request) {
       createdAt: new Date(),
     })
 
-    return NextResponse.json({ success: true, insertedId: result.insertedId }, { status: 201 })
+    // Set authentication cookie for the new user
+    const response = NextResponse.json({ success: true, insertedId: result.insertedId }, { status: 201 })
+    
+    response.cookies.set("user_email", email, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+    })
+
+    return response
   } catch (error) {
     console.error("Register API error:", error)
     return NextResponse.json({ success: false, error: "Server error" }, { status: 500 })

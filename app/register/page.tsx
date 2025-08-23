@@ -5,6 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useProfile } from "../../hooks/useProfile"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -14,6 +15,7 @@ import { Home, Loader2 } from "lucide-react"
 
 export default function RegisterPage() {
   const router = useRouter()
+  const { clearProfile } = useProfile()
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
@@ -41,6 +43,8 @@ export default function RegisterPage() {
 
     const data = await res.json()
     if (res.ok && data.success) {
+      // Clear any existing profile data for new user
+      clearProfile()
       router.push("/profile/edit")
     } else {
       alert(data.error || "Failed to register")

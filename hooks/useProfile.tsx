@@ -22,6 +22,7 @@ interface ProfileContextType {
   profile: Profile | null
   isLoading: boolean
   refreshProfile: () => Promise<void>
+  clearProfile: () => void
 }
 
 const ProfileContext = createContext<ProfileContextType | undefined>(undefined)
@@ -49,10 +50,15 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     fetchProfile()
   }, [fetchProfile])
 
+  const clearProfile = useCallback(() => {
+    setProfile(null)
+  }, [])
+
   const value: ProfileContextType = {
     profile,
     isLoading,
-    refreshProfile: fetchProfile
+    refreshProfile: fetchProfile,
+    clearProfile
   }
 
   return (
