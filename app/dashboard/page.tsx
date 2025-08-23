@@ -82,8 +82,8 @@ console.log("Match count:", mutualMatches.length)
               <Calendar className="h-4 w-4 text-gray-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">3</div>
-              <p className="text-xs text-gray-500">Next: Tomorrow, 2PM</p>
+              <div className="text-2xl font-bold">0</div>
+              <p className="text-xs text-gray-500">No meetings scheduled</p>
             </CardContent>
           </Card>
         </div>
@@ -96,25 +96,18 @@ console.log("Match count:", mutualMatches.length)
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-full bg-gray-200 overflow-hidden">
-                      <img
-                        src={`/placeholder.svg?height=48&width=48&text=User${i}`}
-                        alt={`User ${i}`}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-medium">Sarah Johnson</h3>
-                      <p className="text-sm text-gray-500">Matched 2 days ago</p>
-                    </div>
-                    <Button size="sm" variant="outline">
-                      <MessageCircle className="h-4 w-4 mr-2" />
-                      Message
-                    </Button>
+                {matchCount === 0 ? (
+                  <div className="text-center py-8 border rounded-lg">
+                    <Heart className="h-12 w-12 text-gray-300 mx-auto mb-2" />
+                    <p className="text-gray-500">No matches yet</p>
+                    <p className="text-sm text-gray-400">Start swiping to find your perfect roommate</p>
                   </div>
-                ))}
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-gray-500">You have {matchCount} match{matchCount !== 1 ? 'es' : ''}</p>
+                    <p className="text-sm text-gray-400">Check your matches page to see them</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -126,22 +119,14 @@ console.log("Match count:", mutualMatches.length)
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {[1, 2].map((i) => (
-                  <div key={i} className="flex flex-col gap-2 p-3 border rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-orange-500" />
-                      <span className="font-medium">May {10 + i}, 2023</span>
-                    </div>
-                    <p className="text-sm">Meeting with Michael Brown</p>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <Home className="h-4 w-4" />
-                      <span>123 Apartment St, #304</span>
-                    </div>
-                  </div>
-                ))}
+                <div className="text-center py-8 border rounded-lg">
+                  <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-2" />
+                  <p className="text-gray-500">No meetings scheduled</p>
+                  <p className="text-sm text-gray-400">Schedule meetings with your matches</p>
+                </div>
                 <Link href="/calendar">
                   <Button variant="outline" className="w-full">
-                    View All Meetings
+                    Schedule Meeting
                   </Button>
                 </Link>
               </div>

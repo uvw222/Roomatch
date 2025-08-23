@@ -36,35 +36,7 @@ type Meeting = {
 export default function CalendarPage() {
   const [date, setDate] = useState<Date | undefined>(new Date())
   const [userEmail, setUserEmail] = useState<string>("")
-  const [meetings, setMeetings] = useState<Meeting[]>([
-    {
-      id: 1,
-      date: new Date(2023, 4, 15),
-      time: "14:00",
-      location: "Coffee Shop",
-      address: "123 Main St",
-      with: "Sarah Johnson",
-      notes: "Discussing potential roommate arrangement for downtown apartment.",
-    },
-    {
-      id: 2,
-      date: new Date(2023, 4, 18),
-      time: "16:30",
-      location: "Apartment Viewing",
-      address: "456 Park Ave, Apt 302",
-      with: "Michael Brown",
-      notes: "Viewing the apartment together to see if it's a good fit for both of us.",
-    },
-    {
-      id: 3,
-      date: new Date(2023, 4, 20),
-      time: "11:00",
-      location: "Video Call",
-      address: "Zoom",
-      with: "Emily Davis",
-      notes: "Initial meeting to discuss living preferences and potential compatibility.",
-    },
-  ])
+  const [meetings, setMeetings] = useState<Meeting[]>([])
 
   const [newMeeting, setNewMeeting] = useState<Omit<Meeting, "id">>({
     date: new Date(),

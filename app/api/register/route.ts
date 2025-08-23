@@ -33,6 +33,8 @@ export async function POST(req: Request) {
       hasPets: false,
       isSmoker: false,
       views: 0,
+      likedProfiles: [],
+      dislikedProfiles: [],
       lifestyle: {
         cleanliness: 50,
         noise: 50,
