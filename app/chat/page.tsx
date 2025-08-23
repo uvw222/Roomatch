@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, User } from "lucide-react";
+import { Send, User, Search, MoreVertical, Phone, Video, ArrowLeft } from "lucide-react";
 import InitSocket from "@/components/InitSocket"; // ✅ ADDED
 import { useProfile } from "../../hooks/useProfile";
 
@@ -114,114 +114,171 @@ useEffect(() => {
   };
 
   return (
-    <div className="flex flex-col h-full pt-safe pb-safe">
+    <div className="flex flex-col h-full pt-safe pb-safe bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* ✅ Added socket init */}
       {profile?.email && <InitSocket email={profile.email} />}
 
       <div className="container px-4 py-4 flex-1 flex flex-col">
-        <h1 className="text-3xl font-bold mb-4">RooChat</h1>
+        {/* Enhanced Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+              RooChat
+            </h1>
+            <p className="text-slate-600">Connect with your potential roommates</p>
+          </div>
+          <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border border-slate-200 shadow-sm">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span className="text-sm font-medium text-slate-700">Online</span>
+          </div>
+        </div>
 
-        <div className="border rounded-lg grid grid-cols-1 md:grid-cols-[300px_1fr] flex-1">
-          {/* -------- Contacts list -------- */}
-          <div className="border-r">
-            <div className="p-3 border-b">
-              <Input placeholder="Search conversations..." />
+        <div className="bg-white/80 backdrop-blur-sm border-0 rounded-2xl shadow-xl grid grid-cols-1 md:grid-cols-[350px_1fr] flex-1 overflow-hidden">
+          {/* -------- Enhanced Contacts list -------- */}
+          <div className="border-r border-slate-200">
+            <div className="p-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input 
+                  placeholder="Search conversations..." 
+                  className="pl-10 border-slate-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200"
+                />
+              </div>
             </div>
-            <ScrollArea className="h-[calc(var(--app-height)-220px)] md:h-[calc(var(--app-height)-220px)]">
-              {contacts.map((c) => (
-                <div
-                  key={c._id}
-                  onClick={() => handleContactSelect(c)}
-                  className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${
-                    selectedContact?._id === c._id ? "bg-gray-100 dark:bg-gray-800" : ""
-                  }`}
-                >
-                  <div className="relative">
-                    <img
-                      src={c.image || "/placeholder.svg"}
-                      alt={c.name}
-                      className="h-10 w-10 rounded-full object-cover"
-                    />
-                    {c.unread > 0 && (
-                      <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-orange-600 text-white text-xs flex items-center justify-center">
-                        {c.unread}
-                      </div>
-                    )}
+            <ScrollArea className="h-[calc(var(--app-height)-280px)] md:h-[calc(var(--app-height)-280px)]">
+              {contacts.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <User className="h-8 w-8 text-orange-500" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between">
-                      <h3 className="font-medium truncate">{c.name}</h3>
-                      <span className="text-xs text-gray-500">{c.time}</span>
-                    </div>
-                    <p className="text-sm text-gray-500 truncate">{c.lastMessage}</p>
-                  </div>
+                  <h3 className="text-lg font-semibold text-slate-800 mb-2">No conversations yet</h3>
+                  <p className="text-slate-600">Start matching to begin chatting</p>
                 </div>
-              ))}
+              ) : (
+                contacts.map((c) => (
+                  <div
+                    key={c._id}
+                    onClick={() => handleContactSelect(c)}
+                    className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-slate-50 transition-all duration-200 ${
+                      selectedContact?._id === c._id ? "bg-gradient-to-r from-orange-50 to-red-50 border-r-2 border-orange-500" : ""
+                    }`}
+                  >
+                    <div className="relative">
+                      <img
+                        src={c.image || "/placeholder.svg"}
+                        alt={c.name}
+                        className="h-12 w-12 rounded-full object-cover border-2 border-slate-200"
+                      />
+                      {c.unread > 0 && (
+                        <div className="absolute -top-1 -right-1 h-6 w-6 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs flex items-center justify-center font-semibold shadow-lg">
+                          {c.unread}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start">
+                        <h3 className="font-semibold text-slate-800 truncate">{c.name}</h3>
+                        <span className="text-xs text-slate-500 font-medium">{c.time}</span>
+                      </div>
+                      <p className="text-sm text-slate-600 truncate mt-1">{c.lastMessage}</p>
+                    </div>
+                  </div>
+                ))
+              )}
             </ScrollArea>
           </div>
 
-          {/* -------- Conversation -------- */}
+          {/* -------- Enhanced Conversation -------- */}
           {selectedContact ? (
             <div className="flex flex-col h-full">
-              {/* Header */}
-              <div className="p-3 border-b flex items-center gap-3">
-                <img
-                  src={selectedContact.image || "/placeholder.svg"}
-                  className="h-10 w-10 rounded-full object-cover"
-                  alt={selectedContact.name}
-                />
-                <div>
-                  <h2 className="font-medium">{selectedContact.name}</h2>
-                  <p className="text-xs text-gray-500">Online</p>
+              {/* Enhanced Header */}
+              <div className="p-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={selectedContact.image || "/placeholder.svg"}
+                    className="h-12 w-12 rounded-full object-cover border-2 border-slate-200"
+                    alt={selectedContact.name}
+                  />
+                  <div>
+                    <h2 className="font-semibold text-slate-800">{selectedContact.name}</h2>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <p className="text-sm text-slate-600">Online</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" className="h-9 w-9 p-0 hover:bg-slate-100">
+                    <Phone className="h-4 w-4 text-slate-600" />
+                  </Button>
+                  <Button variant="ghost" size="sm" className="h-9 w-9 p-0 hover:bg-slate-100">
+                    <Video className="h-4 w-4 text-slate-600" />
+                  </Button>
+                  <Button variant="ghost" size="sm" className="h-9 w-9 p-0 hover:bg-slate-100">
+                    <MoreVertical className="h-4 w-4 text-slate-600" />
+                  </Button>
                 </div>
               </div>
 
-              {/* Message list */}
-              <ScrollArea className="flex-1 p-4 chat-content-area">
+              {/* Enhanced Message list */}
+              <ScrollArea className="flex-1 p-6 chat-content-area">
                 <div className="space-y-4">
-                  {messages.map((m, idx) => {
-  const isMyMessage = m.from?.toLowerCase() === profile?.email?.toLowerCase();
-  return (
-    <div
-      key={m._id}
-      className={`flex ${isMyMessage ? "justify-end" : "justify-start"}`}
-      ref={idx === messages.length - 1 ? bottomRef : null}
-    >
-      <div
-        className={`max-w-[70%] rounded-lg p-3 ${
-          isMyMessage
-            ? "bg-orange-600 text-white"
-            : "bg-gray-100 dark:bg-gray-800 text-black dark:text-white"
-        }`}
-      >
-        <p>{m.text}</p>
-        <p className={`text-xs mt-1 ${isMyMessage ? "text-orange-100" : "text-gray-500"}`}>
-          {new Date(m.timestamp).toLocaleTimeString()}
-        </p>
-      </div>
-    </div>
-  );
-})}
-
-
+                  {messages.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Send className="h-8 w-8 text-blue-500" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-slate-800 mb-2">Start a conversation</h3>
+                      <p className="text-slate-600">Send a message to begin chatting with {selectedContact.name}</p>
+                    </div>
+                  ) : (
+                    messages.map((m, idx) => {
+                      const isMyMessage = m.from?.toLowerCase() === profile?.email?.toLowerCase();
+                      return (
+                        <div
+                          key={m._id}
+                          className={`flex ${isMyMessage ? "justify-end" : "justify-start"}`}
+                          ref={idx === messages.length - 1 ? bottomRef : null}
+                        >
+                          <div
+                            className={`max-w-[70%] rounded-2xl p-4 shadow-sm ${
+                              isMyMessage
+                                ? "bg-gradient-to-r from-orange-500 to-red-500 text-white"
+                                : "bg-white border border-slate-200 text-slate-800"
+                            }`}
+                          >
+                            <p className="leading-relaxed">{m.text}</p>
+                            <p className={`text-xs mt-2 ${isMyMessage ? "text-orange-100" : "text-slate-500"}`}>
+                              {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </ScrollArea>
 
-              {/* Compose box */}
-              <div className="p-3 border-t">
+              {/* Enhanced Compose box */}
+              <div className="p-4 border-t border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50">
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
                     handleSendMessage();
                   }}
-                  className="flex gap-2"
+                  className="flex gap-3"
                 >
                   <Input
                     value={newMessage}
                     placeholder="Type a message…"
                     onChange={(e) => setNewMessage(e.target.value)}
+                    className="flex-1 border-slate-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200"
                   />
-                  <Button className="bg-orange-600 hover:bg-orange-700" type="submit">
+                  <Button 
+                    className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-lg hover:shadow-xl transition-all duration-200" 
+                    type="submit"
+                    disabled={!newMessage.trim()}
+                  >
                     <Send className="h-4 w-4" />
                   </Button>
                 </form>
@@ -230,9 +287,11 @@ useEffect(() => {
           ) : (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
-                <User className="h-12 w-12 text-gray-300 mx-auto mb-2" />
-                <h2 className="text-xl font-medium">No conversation selected</h2>
-                <p className="text-gray-500">Choose a contact to start chatting</p>
+                <div className="w-20 h-20 bg-gradient-to-br from-slate-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <User className="h-10 w-10 text-slate-400" />
+                </div>
+                <h2 className="text-xl font-semibold text-slate-800 mb-2">No conversation selected</h2>
+                <p className="text-slate-600">Choose a contact to start chatting</p>
               </div>
             </div>
           )}

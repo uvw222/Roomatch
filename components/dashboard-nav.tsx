@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Calendar, Heart, Home, LogOut, Menu, MessageCircle, Settings, User, Edit } from "lucide-react"
+import { Calendar, Heart, Home, LogOut, Menu, MessageCircle, Settings, User, Edit, Users } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useProfileImage } from "@/hooks/useProfile"
 
@@ -40,6 +40,7 @@ export default function DashboardNav() {
   const routes = [
     { name: "Dashboard", path: "/dashboard", icon: <Home className="h-5 w-5" /> },
     { name: "Find Match", path: "/match", icon: <Heart className="h-5 w-5" /> },
+    { name: "Likes", path: "/likes", icon: <Users className="h-5 w-5" /> },
     { name: "RooChat", path: "/chat", icon: <MessageCircle className="h-5 w-5" /> },
     { name: "Calendar", path: "/calendar", icon: <Calendar className="h-5 w-5" /> },
     { name: "My Profile", path: "/profile/me", icon: <User className="h-5 w-5" /> },
@@ -101,6 +102,12 @@ export default function DashboardNav() {
                 <Link href="/profile/edit" className="cursor-pointer">
                   <Edit className="mr-2 h-4 w-4" />
                   <span>Edit Profile</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/likes" className="cursor-pointer">
+                  <Users className="mr-2 h-4 w-4" />
+                  <span>My Likes</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
