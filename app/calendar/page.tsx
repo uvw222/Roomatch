@@ -20,6 +20,8 @@ import { CalendarIcon, Clock, MapPin, Plus } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
+import AddToCalendarButton from "@/components/AddToCalendarButton"
+import { CalendarEvent } from "@/lib/calendarIntegration"
 
 type Meeting = {
   id: number
@@ -33,6 +35,7 @@ type Meeting = {
 
 export default function CalendarPage() {
   const [date, setDate] = useState<Date | undefined>(new Date())
+  const [userEmail, setUserEmail] = useState<string>("")
   const [meetings, setMeetings] = useState<Meeting[]>([
     {
       id: 1,
@@ -74,6 +77,15 @@ export default function CalendarPage() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
+  // Get user email from localStorage or cookies
+  useState(() => {
+    const storedEmail = localStorage.getItem('userEmail') || 
+                       document.cookie.split('; ').find(row => row.startsWith('user_email='))?.split('=')[1]
+    if (storedEmail) {
+      setUserEmail(storedEmail)
+    }
+  })
+
   const handleAddMeeting = () => {
     const meeting = {
       ...newMeeting,
@@ -90,6 +102,24 @@ export default function CalendarPage() {
       with: "",
       notes: "",
     })
+  }
+
+  const convertMeetingToCalendarEvent = (meeting: Meeting): CalendarEvent => {
+    const [hours, minutes] = meeting.time.split(':').map(Number)
+    const startDate = new Date(meeting.date)
+    startDate.setHours(hours, minutes, 0, 0)
+    
+    const endDate = new Date(startDate)
+    endDate.setHours(hours + 1, minutes, 0, 0) // Default 1 hour duration
+
+    return {
+      title: `Meeting with ${meeting.with}`,
+      description: meeting.notes,
+      startDate,
+      endDate,
+      location: `${meeting.location} - ${meeting.address}`,
+      attendees: [userEmail, meeting.with].filter(Boolean)
+    }
   }
 
   const filteredMeetings = date
@@ -269,6 +299,12 @@ export default function CalendarPage() {
                         </div>
                         {meeting.notes && <p className="text-gray-600 border-t pt-2 mt-2">{meeting.notes}</p>}
                         <div className="flex gap-2 mt-4">
+                          <AddToCalendarButton 
+                            event={convertMeetingToCalendarEvent(meeting)}
+                            userEmail={userEmail}
+                            variant="outline"
+                            size="sm"
+                          />
                           <Button variant="outline" size="sm">
                             Reschedule
                           </Button>
@@ -311,6 +347,14 @@ export default function CalendarPage() {
                           <div className="flex items-center gap-1 text-sm text-gray-500">
                             <MapPin className="h-3 w-3" />
                             <span className="truncate">{meeting.location}</span>
+                          </div>
+                          <div className="mt-2">
+                            <AddToCalendarButton 
+                              event={convertMeetingToCalendarEvent(meeting)}
+                              userEmail={userEmail}
+                              variant="ghost"
+                              size="sm"
+                            />
                           </div>
                         </div>
                       </div>
