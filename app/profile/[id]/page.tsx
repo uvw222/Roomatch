@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation"
 import connectToDatabase from "@/lib/mongodb"
 import Profile from "@/models/Profile"
-import GoogleMap from "@/components/GoogleMap"
+import SmartMap from "@/components/SmartMap"
 
 type ProfileType = {
   _id: string
@@ -42,7 +42,7 @@ console.log(" Profile views (after update):", profile.views)
       {profile.coordinates && (
         <div className="mt-6">
           <h3 className="text-lg font-semibold mb-2">Location</h3>
-          <GoogleMap 
+          <SmartMap 
             latitude={profile.coordinates.latitude}
             longitude={profile.coordinates.longitude}
             height="300px"

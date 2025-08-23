@@ -37,7 +37,7 @@ export default function HomePage() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <Link href="/register">
+                  <Link href="/login">
                     <Button size="lg" className="bg-primary hover:bg-primary/90">
                       Get Started
                       <ArrowRight className="ml-2 h-4 w-4" />

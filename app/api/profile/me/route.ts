@@ -34,6 +34,10 @@ export async function GET() {
         location: profile.location,
         bio: profile.bio,
         profileImage: profile.profileImage || "",
+        coordinates: profile.coordinates,
+        email: profile.email,
+        views: profile.views,
+        likedProfiles: profile.likedProfiles,
       },
     }, { status: 200 });
 

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, User } from "lucide-react";
 import InitSocket from "@/components/InitSocket"; // ✅ ADDED
+import { useProfile } from "../../hooks/useProfile";
 
 
 /* ---------- Types ---------- */
@@ -49,7 +50,7 @@ async function fetchConversation(otherEmail: string): Promise<ServerMessage[]> {
 
 export default function ChatPage() {
   const bottomRef = useRef<HTMLDivElement | null>(null);
-  const [myEmail, setMyEmail] = useState<string>("");
+  const { profile } = useProfile();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [messages, setMessages] = useState<ServerMessage[]>([]);
@@ -63,10 +64,7 @@ useEffect(() => {
 
   useEffect(() => {
     const init = async () => {
-      const meRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/me`);
-      const meData = await meRes.json();
-      if (!meData.success) return;
-      setMyEmail(meData.profile.email);
+      if (!profile?.email) return;
 
       const list = await fetchContacts();
       setContacts(list);
@@ -77,7 +75,7 @@ useEffect(() => {
       }
     };
     init();
-  }, []);
+  }, [profile?.email]);
 
   const handleContactSelect = async (contact: Contact) => {
     setSelectedContact(contact);
@@ -85,7 +83,7 @@ useEffect(() => {
     setMessages(msgs);
 
     const unreadIds = msgs
-      .filter((m) => !m.read && m.to === myEmail)
+      .filter((m) => !m.read && m.to === profile?.email)
       .map((m) => m._id);
 
     if (unreadIds.length) {
@@ -118,7 +116,7 @@ useEffect(() => {
   return (
     <div className="flex flex-col h-full pt-safe pb-safe">
       {/* ✅ Added socket init */}
-      {myEmail && <InitSocket email={myEmail} />}
+      {profile?.email && <InitSocket email={profile.email} />}
 
       <div className="container px-4 py-4 flex-1 flex flex-col">
         <h1 className="text-3xl font-bold mb-4">RooChat</h1>
@@ -182,7 +180,7 @@ useEffect(() => {
               <ScrollArea className="flex-1 p-4 chat-content-area">
                 <div className="space-y-4">
                   {messages.map((m, idx) => {
-  const isMyMessage = m.from?.toLowerCase() === myEmail?.toLowerCase();
+  const isMyMessage = m.from?.toLowerCase() === profile?.email?.toLowerCase();
   return (
     <div
       key={m._id}

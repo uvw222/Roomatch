@@ -14,43 +14,35 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Calendar, Heart, Home, LogOut, Menu, MessageCircle, Settings, User } from "lucide-react"
+import { Calendar, Heart, Home, LogOut, Menu, MessageCircle, Settings, User, Edit } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { useProfileImage } from "@/hooks/useProfile"
 
 export default function DashboardNav() {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
-  const [profileImage, setProfileImage] = useState("")
-const router = useRouter()
+  const { profileImage, isLoading, refreshProfileImage } = useProfileImage()
+  const router = useRouter()
 
-const handleLogout = async () => {
-  await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/logout`, { method: "POST" })
-  router.push("/login")
-}
+  const handleLogout = async () => {
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/logout`, { method: "POST" })
+    router.push("/login")
+  }
 
+  // Refresh profile image when pathname changes (e.g., when returning from profile edit)
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/me`)
-        const data = await res.json()
-        console.log("Profile fetched:", data)
-        if (data.success) {
-          setProfileImage(data.profile?.profileImage || "")
-        }
-      } catch (err) {
-        console.error("Failed to load profile image", err)
-      }
+    // Only refresh when navigating to dashboard or after profile edit
+    if (pathname === '/dashboard' || pathname === '/profile/edit') {
+      refreshProfileImage()
     }
-
-    fetchProfile()
-  }, [])
+  }, [pathname, refreshProfileImage])
 
   const routes = [
     { name: "Dashboard", path: "/dashboard", icon: <Home className="h-5 w-5" /> },
     { name: "Find Match", path: "/match", icon: <Heart className="h-5 w-5" /> },
     { name: "RooChat", path: "/chat", icon: <MessageCircle className="h-5 w-5" /> },
     { name: "Calendar", path: "/calendar", icon: <Calendar className="h-5 w-5" /> },
-    { name: "Profile", path: "/profile/edit", icon: <User className="h-5 w-5" /> },
+    { name: "My Profile", path: "/profile/me", icon: <User className="h-5 w-5" /> },
   ]
 
   return (
@@ -86,7 +78,13 @@ const handleLogout = async () => {
                     src={profileImage || "/placeholder.svg"}
                     alt="User"
                   />
-                  <AvatarFallback>RM</AvatarFallback>
+                  <AvatarFallback>
+                    {isLoading ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                    ) : (
+                      "RM"
+                    )}
+                  </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
@@ -94,9 +92,15 @@ const handleLogout = async () => {
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/profile/edit" className="cursor-pointer">
+                <Link href="/profile/me" className="cursor-pointer">
                   <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
+                  <span>View Profile</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/profile/edit" className="cursor-pointer">
+                  <Edit className="mr-2 h-4 w-4" />
+                  <span>Edit Profile</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
