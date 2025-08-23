@@ -76,6 +76,18 @@ console.log("Match count:", mutualMatches.length)
               <p className="text-xs text-gray-500">unread messages</p>
             </CardContent>
           </Card>
+          <Link href="/likes">
+            <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                <CardTitle className="text-sm font-medium">Likes</CardTitle>
+                <Heart className="h-4 w-4 text-orange-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{profile.likedProfiles?.length || 0}</div>
+                <p className="text-xs text-gray-500">People you've liked</p>
+              </CardContent>
+            </Card>
+          </Link>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-sm font-medium">Meetings</CardTitle>

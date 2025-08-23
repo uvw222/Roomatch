@@ -12,7 +12,13 @@ export function getSocketClient(meEmail: string) {
 
   socket = io({
     path: "/api/socket",
-    transports: ["websocket"],
+    transports: ["websocket", "polling"], // Add polling as fallback
+    timeout: 60000, // 60 seconds timeout
+    reconnection: true,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    reconnectionAttempts: 5,
+    forceNew: false,
   });
 
   socket.on("connect", () => {
@@ -29,5 +35,36 @@ export function getSocketClient(meEmail: string) {
     console.error("❌ connect_error", err);
   });
 
+  socket.on("disconnect", (reason) => {
+    console.warn("🔌 socket disconnected:", reason);
+  });
+
+  socket.on("reconnect", (attemptNumber) => {
+    console.log("🔄 socket reconnected after", attemptNumber, "attempts");
+  });
+
+  socket.on("reconnect_error", (err) => {
+    console.error("❌ reconnect_error", err);
+  });
+
+  socket.on("reconnect_failed", () => {
+    console.error("❌ reconnection failed - max attempts reached");
+  });
+
   return socket;
+}
+
+export function disconnectSocket() {
+  if (socket) {
+    console.log("[disconnectSocket] Cleaning up socket connection");
+    socket.disconnect();
+    socket = null;
+  }
+}
+
+export function getSocketStatus() {
+  return {
+    connected: socket?.connected || false,
+    id: socket?.id || null,
+  };
 }

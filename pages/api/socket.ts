@@ -26,9 +26,16 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     console.log("🟢 Booting Socket.IO server...");
 
     const io = new IOServer((res.socket as any).server, {
-
       path: "/api/socket",
       addTrailingSlash: false,
+      cors: {
+        origin: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000",
+        methods: ["GET", "POST"],
+      },
+      connectTimeout: 60000, // 60 seconds
+      pingTimeout: 60000, // 60 seconds  
+      pingInterval: 25000, // 25 seconds
+      transports: ["websocket", "polling"],
     });
 
     global._io = io;
@@ -39,6 +46,19 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       socket.on("join", (email: string) => {
         socket.join(email);
         console.log("📥 joined room", email, "sid:", socket.id);
+      });
+
+      socket.on("disconnect", (reason) => {
+        console.log("🔌 client disconnected:", socket.id, "reason:", reason);
+      });
+
+      socket.on("error", (error) => {
+        console.error("❌ socket error:", error);
+      });
+
+      // Handle connection errors
+      socket.on("connect_error", (error) => {
+        console.error("❌ connection error:", error);
       });
     });
   } else {
