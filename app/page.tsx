@@ -4,10 +4,10 @@ import { ArrowRight, Home, MessageCircle, Users, Heart, Star, Shield, Zap } from
 
 export default function HomePage() {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col min-h-screen">
       {/* Enhanced Header */}
       <header className="border-b bg-white/80 backdrop-blur-md pt-safe sticky top-0 z-50">
-        <div className="container flex h-16 items-center justify-between px-4">
+        <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2 font-bold text-xl hover:opacity-80 transition-all duration-200 group">
             <div className="p-1.5 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg group-hover:scale-110 transition-transform duration-200">
               <Home className="h-4 w-4 text-white" />
@@ -29,7 +29,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main>
+      <main className="flex-1 overflow-auto no-scrollbar">
         {/* Hero Section */}
         <section className="relative py-20 md:py-32 bg-gradient-to-br from-slate-50 via-orange-50 to-red-50 overflow-hidden">
           {/* Background Decorations */}
@@ -39,8 +39,8 @@ export default function HomePage() {
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-orange-100 to-yellow-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{animationDelay: '4s'}}></div>
           </div>
 
-          <div className="container px-4 md:px-6 relative z-10">
-            <div className="grid gap-8 lg:grid-cols-2 lg:gap-16 items-center">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="grid gap-8 lg:grid-cols-2 lg:gap-16 items-center max-w-6xl mx-auto">
               <div className="flex flex-col justify-center space-y-6">
                 <div className="space-y-4">
                   <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border border-orange-200 shadow-sm">
@@ -123,8 +123,8 @@ export default function HomePage() {
 
         {/* How It Works Section */}
         <section id="how-it-works" className="py-16 md:py-24 bg-white relative">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-6 text-center mb-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col items-center justify-center space-y-6 text-center mb-16 max-w-4xl mx-auto">
               <div className="space-y-4">
                 <div className="inline-flex items-center gap-2 bg-orange-50 px-4 py-2 rounded-full border border-orange-200">
                   <Zap className="h-4 w-4 text-orange-600" />
@@ -140,7 +140,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="mx-auto grid max-w-6xl items-center gap-8 lg:grid-cols-3 lg:gap-12">
+            <div className="mx-auto grid max-w-5xl items-center gap-8 lg:grid-cols-3 lg:gap-12">
               <div className="flex flex-col justify-center space-y-6 group">
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-100 to-red-100 shadow-lg group-hover:scale-110 transition-all duration-200">
                   <Users className="h-8 w-8 text-orange-600" />
@@ -185,8 +185,8 @@ export default function HomePage() {
 
         {/* Features Section */}
         <section className="py-16 md:py-24 bg-gradient-to-br from-slate-50 to-blue-50">
-          <div className="container px-4 md:px-6">
-            <div className="text-center mb-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16 max-w-4xl mx-auto">
               <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent mb-4">
                 Why Choose RoomMatch?
               </h2>
@@ -195,7 +195,7 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
               <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-200 border border-slate-200">
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-green-100 to-emerald-100 mb-4">
                   <Shield className="h-6 w-6 text-green-600" />
@@ -232,7 +232,7 @@ export default function HomePage() {
 
       {/* Enhanced Footer */}
       <footer className="border-t bg-slate-900 text-white py-8 md:py-12">
-        <div className="container px-4 md:px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
             <div className="flex items-center gap-2">
               <div className="p-1.5 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg">
