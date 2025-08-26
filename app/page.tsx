@@ -4,7 +4,7 @@ import { ArrowRight, Home, MessageCircle, Users, Heart, Star, Shield, Zap } from
 
 export default function HomePage() {
   return (
-    <div className="flex flex-col mobile-height-screen">
+    <div className="flex flex-col">
       {/* Enhanced Header */}
       <header className="border-b bg-white/80 backdrop-blur-md pt-safe sticky top-0 z-50">
         <div className="container flex h-16 items-center justify-between px-4">
@@ -29,7 +29,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-auto no-scrollbar">
+      <main>
         {/* Hero Section */}
         <section className="relative py-20 md:py-32 bg-gradient-to-br from-slate-50 via-orange-50 to-red-50 overflow-hidden">
           {/* Background Decorations */}

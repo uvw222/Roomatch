@@ -54,7 +54,7 @@ export default function DashboardNav() {
           <span>RoomMatch</span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className="hidden lg:flex items-center gap-6">
           {routes.map((route) => (
             <Link
               key={route.path}
@@ -127,7 +127,7 @@ export default function DashboardNav() {
 
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
+              <Button variant="ghost" size="icon" className="lg:hidden">
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>

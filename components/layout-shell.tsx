@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation"
 import DashboardNav from "./dashboard-nav"
+import Footer from "./footer"
 
 export default function LayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -13,7 +14,8 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
   return (
     <div className="flex flex-col h-full">
       {showDashboardNav && <DashboardNav />}
-      <main className="flex-1 overflow-auto">{children}</main>
+      <main className="flex-1 overflow-auto lg:pb-0 pb-16">{children}</main>
+      <Footer />
     </div>
   )
 }
