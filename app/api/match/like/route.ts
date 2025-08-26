@@ -3,6 +3,7 @@ import { NextResponse } from "next/server"
 import { getCollection } from "@/lib/db"
 import { requireAuth } from "@/lib/auth"
 import { ObjectId } from "mongodb"
+import { getSocket } from "@/lib/socket"
 
 export async function POST(req: Request) {
   try {
@@ -45,6 +46,35 @@ export async function POST(req: Request) {
         { email: user.email },
         { $pull: { dislikedProfiles: targetProfileId } }
       )
+    }
+
+    // Check if this creates a mutual match
+    if (targetProfile.likedProfiles?.includes(currentUser._id.toString())) {
+      // It's a mutual match! Send notifications to both users
+      const io = getSocket()
+      if (io) {
+        // Send notification to the current user
+        io.to(user.email).emit('newMatch', {
+          type: 'newMatch',
+          match: {
+            name: targetProfile.name,
+            userType: targetProfile.userType,
+            profileImage: targetProfile.profileImage,
+            email: targetProfile.email
+          }
+        })
+
+        // Send notification to the target user
+        io.to(targetProfile.email).emit('newMatch', {
+          type: 'newMatch',
+          match: {
+            name: currentUser.name,
+            userType: currentUser.userType,
+            profileImage: currentUser.profileImage,
+            email: currentUser.email
+          }
+        })
+      }
     }
 
     return NextResponse.json({ success: true })

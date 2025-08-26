@@ -75,18 +75,20 @@ console.log("Match count:", mutualMatches.length)
               </CardContent>
             </Card>
 
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 group">
-              <CardHeader className="flex flex-row items-center justify-between pb-3 space-y-0">
-                <CardTitle className="text-sm font-semibold text-slate-700">Matches</CardTitle>
-                <div className="p-2 bg-gradient-to-br from-orange-100 to-red-100 rounded-lg group-hover:scale-110 transition-transform duration-200">
-                  <Heart className="h-4 w-4 text-orange-600" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-slate-800 mb-1">{matchCount}</div>
-                <p className="text-xs text-slate-500">mutual connections</p>
-              </CardContent>
-            </Card>
+            <Link href="/matches">
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 group cursor-pointer">
+                <CardHeader className="flex flex-row items-center justify-between pb-3 space-y-0">
+                  <CardTitle className="text-sm font-semibold text-slate-700">Matches</CardTitle>
+                  <div className="p-2 bg-gradient-to-br from-orange-100 to-red-100 rounded-lg group-hover:scale-110 transition-transform duration-200">
+                    <Heart className="h-4 w-4 text-orange-600" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-slate-800 mb-1">{matchCount}</div>
+                  <p className="text-xs text-slate-500">mutual connections</p>
+                </CardContent>
+              </Card>
+            </Link>
 
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 group">
               <CardHeader className="flex flex-row items-center justify-between pb-3 space-y-0">
@@ -157,7 +159,7 @@ console.log("Match count:", mutualMatches.length)
                       </div>
                       <h3 className="text-lg font-semibold text-slate-800 mb-2">You have {matchCount} match{matchCount !== 1 ? 'es' : ''}!</h3>
                       <p className="text-slate-600 mb-4">Check your matches page to see them</p>
-                      <Link href="/likes">
+                      <Link href="/matches">
                         <Button variant="outline" className="border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200">
                           View Matches
                           <ArrowRight className="h-4 w-4 ml-2" />

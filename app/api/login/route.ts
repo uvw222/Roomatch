@@ -61,6 +61,12 @@ export async function POST(req: Request) {
       { status: 200 }
     );
 
+    // Update last login time
+    await profiles.updateOne(
+      { email: user.email },
+      { $set: { lastLoginAt: new Date() } }
+    )
+
     // Set authentication cookies with JWT token
     return setAuthCookies(response, userSession);
   } catch (error) {
