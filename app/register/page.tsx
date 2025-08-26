@@ -61,10 +61,10 @@ export default function RegisterPage() {
 
 
   return (
-    <div className="flex flex-col mobile-height-screen bg-gradient-to-br from-slate-50 via-orange-50 to-red-50">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-red-50">
       {/* Enhanced Header */}
       <header className="border-b bg-white/80 backdrop-blur-md pt-safe sticky top-0 z-50">
-        <div className="container flex h-16 items-center justify-between px-4">
+        <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2 font-bold text-xl hover:opacity-80 transition-all duration-200 group">
             <div className="p-1.5 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg group-hover:scale-110 transition-transform duration-200">
               <Home className="h-4 w-4 text-white" />
@@ -86,7 +86,7 @@ export default function RegisterPage() {
         </div>
       </header>
       
-      <main className="flex-1 flex items-center justify-center px-4 pb-safe relative">
+      <main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 pb-safe relative">
         {/* Background Decorations */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-orange-200 to-red-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>

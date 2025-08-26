@@ -244,7 +244,7 @@ export default function MatchPage() {
 
   return (
     <div className="flex flex-col h-full pt-safe pb-safe bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="container px-2 md:px-4 py-4 flex-1 flex flex-col">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex-1 flex flex-col">
         <div className="w-full max-w-[95vw] sm:max-w-sm md:max-w-md mx-auto flex-1 flex flex-col">
           {/* Enhanced Header */}
           <div className="flex flex-col gap-3 mb-6">

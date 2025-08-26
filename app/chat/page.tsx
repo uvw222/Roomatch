@@ -118,7 +118,7 @@ useEffect(() => {
       {/* ✅ Added socket init */}
       {profile?.email && <InitSocket email={profile.email} />}
 
-      <div className="container px-4 py-4 flex-1 flex flex-col">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex-1 flex flex-col">
         {/* Enhanced Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="space-y-1">
