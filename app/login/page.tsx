@@ -3,7 +3,6 @@
 "use client"
 
 import type React from "react"
-import Cookies from "js-cookie"
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -13,9 +12,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Home, Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function LoginPage() {
   const router = useRouter()
+  const { login } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState({
@@ -34,37 +35,24 @@ export default function LoginPage() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault()
-  setIsLoading(true)
+    e.preventDefault()
+    setIsLoading(true)
 
-  try {
-    console.log("ENV API URL:", process.env.NEXT_PUBLIC_API_URL);
-
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: formData.email,
-        password: formData.password,
-      }),
-    })
-
-    const data = await res.json()
-
-    if (res.ok && data.success) {
-      // ✅ Save email in cookie for later use
-      Cookies.set("userEmail", formData.email)
-      router.push("/dashboard")
-    } else {
-      alert(data.message || "Login failed")
+    try {
+      const success = await login(formData.email, formData.password)
+      
+      if (success) {
+        router.push("/dashboard")
+      } else {
+        alert("Login failed. Please check your credentials.")
+      }
+    } catch (err) {
+      console.error("Login error:", err)
+      alert("Something went wrong.")
+    } finally {
+      setIsLoading(false)
     }
-  } catch (err) {
-    console.error("Login error:", err)
-    alert("Something went wrong.")
-  } finally {
-    setIsLoading(false)
   }
-}
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 via-orange-50 to-red-50">

@@ -1,28 +1,55 @@
 // app/api/match/like/route.ts
 import { NextResponse } from "next/server"
-import connectToDatabase from "@/lib/mongodb"
-import Profile from "@/models/Profile"
-import { cookies } from "next/headers"
+import { getCollection } from "@/lib/db"
+import { requireAuth } from "@/lib/auth"
+import { ObjectId } from "mongodb"
 
 export async function POST(req: Request) {
-  await connectToDatabase()
-  const { targetProfileId } = await req.json()
-const cookieStore = await cookies()
-  const userEmail = cookieStore.get("userEmail")?.value
+  try {
+    const user = await requireAuth()
+    const { targetProfileId } = await req.json()
 
-  if (!userEmail || !targetProfileId) {
-    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 })
+    if (!targetProfileId) {
+      return NextResponse.json({ success: false, error: "Target profile ID is required" }, { status: 400 })
+    }
+
+    const profiles = await getCollection("profiles")
+    const currentUser = await profiles.findOne({ email: user.email })
+    
+    if (!currentUser) {
+      return NextResponse.json({ success: false, error: "User not found" }, { status: 404 })
+    }
+
+    // Validate that target profile exists and is of opposite type
+    const targetProfile = await profiles.findOne({ _id: new ObjectId(targetProfileId) })
+    if (!targetProfile) {
+      return NextResponse.json({ success: false, error: "Target profile not found" }, { status: 404 })
+    }
+
+    // Ensure users can only like profiles of opposite type
+    if (targetProfile.userType === currentUser.userType) {
+      return NextResponse.json({ success: false, error: "Cannot like profiles of same user type" }, { status: 400 })
+    }
+
+    // Add to liked profiles if not already there
+    if (!currentUser.likedProfiles.includes(targetProfileId)) {
+      await profiles.updateOne(
+        { email: user.email },
+        { $push: { likedProfiles: targetProfileId } }
+      )
+    }
+
+    // Remove from disliked profiles if it was there
+    if (currentUser.dislikedProfiles?.includes(targetProfileId)) {
+      await profiles.updateOne(
+        { email: user.email },
+        { $pull: { dislikedProfiles: targetProfileId } }
+      )
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error("Like error:", error)
+    return NextResponse.json({ success: false, error: "Server error" }, { status: 500 })
   }
-
-  const currentUser = await Profile.findOne({ email: userEmail })
-  if (!currentUser) {
-    return NextResponse.json({ success: false, error: "User not found" }, { status: 404 })
-  }
-
-  if (!currentUser.likedProfiles.includes(targetProfileId)) {
-    currentUser.likedProfiles.push(targetProfileId)
-    await currentUser.save()
-  }
-
-  return NextResponse.json({ success: true })
 }

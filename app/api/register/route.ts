@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { getCollection } from "@/lib/db"
 import bcrypt from "bcryptjs"
+import { setAuthCookies, UserSession } from "@/lib/auth"
 
 export async function POST(req: Request) {
   try {
@@ -50,17 +51,26 @@ export async function POST(req: Request) {
       createdAt: new Date(),
     })
 
-    // Set authentication cookie for the new user
-    const response = NextResponse.json({ success: true, insertedId: result.insertedId }, { status: 201 })
-    
-    response.cookies.set("user_email", email, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-    })
+    // Create user session data
+    const userSession: UserSession = {
+      email,
+      userId: result.insertedId.toString(),
+      userType,
+      name
+    }
 
-    return response
+    // Set authentication cookies for the new user
+    const response = NextResponse.json({ 
+      success: true, 
+      insertedId: result.insertedId,
+      user: {
+        email,
+        name,
+        userType
+      }
+    }, { status: 201 })
+    
+    return setAuthCookies(response, userSession)
   } catch (error) {
     console.error("Register API error:", error)
     return NextResponse.json({ success: false, error: "Server error" }, { status: 500 })

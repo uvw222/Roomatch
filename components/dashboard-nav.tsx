@@ -17,16 +17,17 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Calendar, Heart, Home, LogOut, Menu, MessageCircle, Settings, User, Edit, Users } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useProfileImage } from "@/hooks/useProfile"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function DashboardNav() {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
   const { profileImage, isLoading, refreshProfileImage } = useProfileImage()
+  const { logout } = useAuth()
   const router = useRouter()
 
   const handleLogout = async () => {
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/logout`, { method: "POST" })
-    router.push("/login")
+    await logout()
   }
 
   // Refresh profile image when pathname changes (e.g., when returning from profile edit)

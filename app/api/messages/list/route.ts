@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { getCollection } from "@/lib/db";
+import { requireAuth } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
-  const cookieStore = await cookies();
-  const email = cookieStore.get("user_email")?.value;
-  if (!email) {
-    return NextResponse.json(
-      { success: false, message: "Not logged in" },
-      { status: 401 },
-    );
-  }
+  try {
+    const user = await requireAuth(req);
+    const email = user.email;
 
   const url  = new URL(req.url!);
   const mode = url.searchParams.get("mode");
@@ -46,18 +41,31 @@ export async function GET(req: NextRequest) {
       if (m.to === email && !m.read) map[other].unread += 1;
     }
 
+    // Get profile information for contacts
+    const profiles = await getCollection("profiles");
+    const contactEmails = Object.keys(map);
+    const contactProfiles = await profiles
+      .find({ email: { $in: contactEmails } })
+      .toArray();
+    
+    const profileMap = new Map(contactProfiles.map(p => [p.email, p]));
+
     // convert to array & sort by lastTime DESC in JS
     const contacts = Object.entries(map)
       .sort((a, b) => +new Date(b[1].lastTime) - +new Date(a[1].lastTime))
-      .map(([other, info]) => ({
-        _id: other,
-        email: other,
-        name: other.split("@")[0],
-        lastMessage: info.lastMessage,
-        time: new Date(info.lastTime).toLocaleString(),
-        unread: info.unread,
-        image: "/placeholder.svg",
-      }));
+      .map(([other, info]) => {
+        const profile = profileMap.get(other);
+        return {
+          _id: other,
+          email: other,
+          name: profile?.name || other.split("@")[0],
+          lastMessage: info.lastMessage,
+          time: new Date(info.lastTime).toLocaleString(),
+          unread: info.unread,
+          image: profile?.profileImage || "/placeholder.svg",
+          userType: profile?.userType,
+        };
+      });
 
     return NextResponse.json({ success: true, contacts });
   }
@@ -92,4 +100,11 @@ export async function GET(req: NextRequest) {
     { success: false, message: "Invalid mode" },
     { status: 400 },
   );
+  } catch (error) {
+    console.error("Messages list error:", error);
+    return NextResponse.json(
+      { success: false, message: "Authentication required" },
+      { status: 401 },
+    );
+  }
 }

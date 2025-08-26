@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCollection } from "@/lib/db";
 import bcrypt from "bcryptjs";
+import { setAuthCookies, UserSession } from "@/lib/auth";
 
 export async function POST(req: Request) {
   try {
@@ -39,19 +40,29 @@ export async function POST(req: Request) {
       );
     }
 
+    // Create user session data
+    const userSession: UserSession = {
+      email: user.email,
+      userId: user._id.toString(),
+      userType: user.userType,
+      name: user.name
+    };
+
     const response = NextResponse.json(
-      { success: true, message: "Login successful", user },
+      { 
+        success: true, 
+        message: "Login successful", 
+        user: {
+          email: user.email,
+          name: user.name,
+          userType: user.userType
+        }
+      },
       { status: 200 }
     );
 
-    response.cookies.set("user_email", email, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-    });
-
-    return response;
+    // Set authentication cookies with JWT token
+    return setAuthCookies(response, userSession);
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json(

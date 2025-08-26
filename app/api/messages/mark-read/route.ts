@@ -1,20 +1,15 @@
 // app/api/messages/mark-read/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { getCollection } from "@/lib/db";
 import { ObjectId } from "mongodb";
 import { getSocket } from "@/lib/socket";
+import { requireAuth } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
-  /* 1. who? */
-  const cookieStore = await cookies();
-  const me = cookieStore.get("user_email")?.value;
-  if (!me) {
-    return NextResponse.json(
-      { success: false, message: "Not logged in" },
-      { status: 401 }
-    );
-  }
+  try {
+    /* 1. who? */
+    const user = await requireAuth(req);
+    const me = user.email;
 
   /* 2. body may be { messageIds } OR { other } */
   const { messageIds = [], other } = await req.json();
@@ -31,7 +26,14 @@ export async function POST(req: NextRequest) {
 
   /* 3. notify peers */
   const io = getSocket();
-io?.to(me).to(other ?? "").emit("messages:read", { otherEmail: me });
+  io?.to(me).to(other ?? "").emit("messages:read", { otherEmail: me });
 
   return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Mark read error:", error);
+    return NextResponse.json(
+      { success: false, message: "Authentication required" },
+      { status: 401 }
+    );
+  }
 }

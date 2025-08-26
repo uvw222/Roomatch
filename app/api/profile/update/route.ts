@@ -1,20 +1,13 @@
 //app/api/profile/update/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getCollection } from "@/lib/db";
-import { cookies } from "next/headers";
+import { requireAuth } from "@/lib/auth";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 
 export async function POST(req: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const email = cookieStore.get("user_email")?.value;
-
-    if (!email) {
-      return NextResponse.json(
-        { success: false, message: "Not logged in" },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth(req);
+    const email = user.email;
 
     const formData = await req.formData();
 

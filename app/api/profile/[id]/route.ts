@@ -18,25 +18,35 @@ export async function GET(
       )
     }
 
+    // Ensure profile is a single object, not an array
+    const profileData = Array.isArray(profile) ? profile[0] : profile
+
+    if (!profileData) {
+      return NextResponse.json(
+        { success: false, message: "Profile not found" },
+        { status: 404 }
+      )
+    }
+
     return NextResponse.json({
       success: true,
       profile: {
-        _id: profile._id?.toString(),
-        name: profile.name,
-        age: profile.age,
-        bio: profile.bio,
-        profileImage: profile.profileImage,
-        occupation: profile.occupation,
-        location: profile.location,
-        coordinates: profile.coordinates,
-        budget: profile.budget,
-        views: profile.views,
-        userType: profile.userType,
-        moveInDate: profile.moveInDate,
-        hasPets: profile.hasPets,
-        isSmoker: profile.isSmoker,
-        lifestyle: profile.lifestyle,
-        preferences: profile.preferences,
+        _id: profileData._id?.toString(),
+        name: profileData.name,
+        age: profileData.age,
+        bio: profileData.bio,
+        profileImage: profileData.profileImage,
+        occupation: profileData.occupation,
+        location: profileData.location,
+        coordinates: profileData.coordinates,
+        budget: profileData.budget,
+        views: profileData.views,
+        userType: profileData.userType,
+        moveInDate: profileData.moveInDate,
+        hasPets: profileData.hasPets,
+        isSmoker: profileData.isSmoker,
+        lifestyle: profileData.lifestyle,
+        preferences: profileData.preferences,
       },
     })
   } catch (error) {

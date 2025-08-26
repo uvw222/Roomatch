@@ -7,6 +7,7 @@ import ViewportHandler from "@/components/viewport-handler"
 import LayoutShell from "@/components/layout-shell"
 import CurrentLocationDetector from "@/components/CurrentLocationDetector"
 import { ProfileProvider } from "@/hooks/useProfile"
+import { AuthProvider } from "@/hooks/useAuth"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
@@ -47,11 +48,13 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} h-full overflow-x-hidden`} suppressHydrationWarning>
         <ThemeProvider>
-          <ProfileProvider>
-            <ViewportHandler />
-            <CurrentLocationDetector />
-            <LayoutShell>{children}</LayoutShell>
-          </ProfileProvider>
+          <AuthProvider>
+            <ProfileProvider>
+              <ViewportHandler />
+              <CurrentLocationDetector />
+              <LayoutShell>{children}</LayoutShell>
+            </ProfileProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

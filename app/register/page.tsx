@@ -12,10 +12,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Home, Loader2, User, Mail, Lock, Eye, EyeOff, Users, Building } from "lucide-react"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function RegisterPage() {
   const router = useRouter()
   const { clearProfile } = useProfile()
+  const { register } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -33,31 +35,37 @@ export default function RegisterPage() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault()
-  setIsLoading(true)
+    e.preventDefault()
+    setIsLoading(true)
 
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    })
+    try {
+      // Validate password confirmation
+      if (formData.password !== formData.confirmPassword) {
+        alert("Passwords do not match")
+        return
+      }
 
-    const data = await res.json()
-    if (res.ok && data.success) {
-      // Clear any existing profile data for new user
-      clearProfile()
-      router.push("/profile/edit")
-    } else {
-      alert(data.error || "Failed to register")
+      const success = await register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        userType: formData.userType,
+      })
+
+      if (success) {
+        // Clear any existing profile data for new user
+        clearProfile()
+        router.push("/profile/edit")
+      } else {
+        alert("Registration failed. Please try again.")
+      }
+    } catch (err) {
+      console.error("Registration failed:", err)
+      alert("Something went wrong.")
+    } finally {
+      setIsLoading(false)
     }
-  } catch (err) {
-    console.error("Registration failed:", err)
-    alert("Something went wrong.")
-  } finally {
-    setIsLoading(false)
   }
-}
 
 
   return (

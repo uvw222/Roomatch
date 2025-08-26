@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -50,13 +50,15 @@ export default function CalendarPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   // Get user email from localStorage or cookies
-  useState(() => {
-    const storedEmail = localStorage.getItem('userEmail') || 
-                       document.cookie.split('; ').find(row => row.startsWith('user_email='))?.split('=')[1]
-    if (storedEmail) {
-      setUserEmail(storedEmail)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedEmail = localStorage.getItem('userEmail') || 
+                         document.cookie.split('; ').find(row => row.startsWith('user_email='))?.split('=')[1]
+      if (storedEmail) {
+        setUserEmail(storedEmail)
+      }
     }
-  })
+  }, [])
 
   const handleAddMeeting = () => {
     const meeting = {

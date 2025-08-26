@@ -1,30 +1,48 @@
 import { NextResponse } from "next/server"
-import connectToDatabase from "@/lib/mongodb"
-import Profile from "@/models/Profile"
-import { cookies } from "next/headers"
-import mongoose from "mongoose"
+import { getCollection } from "@/lib/db"
+import { requireAuth } from "@/lib/auth"
+import { ObjectId } from "mongodb"
 
 export async function GET() {
   try {
-    await connectToDatabase()
-    const cookieStore = await cookies()
-    const userEmail = cookieStore.get("userEmail")?.value
+    const user = await requireAuth()
 
-    if (!userEmail) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
-    }
+    const profiles = await getCollection("profiles")
+    const currentUser = await profiles.findOne({ email: user.email })
 
-    const user = await Profile.findOne({ email: userEmail })
-
-    if (!user) {
+    if (!currentUser) {
       return NextResponse.json({ success: false, error: "User not found" }, { status: 404 })
     }
 
-    const likedIds = (user.likedProfiles || []).map((id: string) => new mongoose.Types.ObjectId(id))
+    const likedIds = (currentUser.likedProfiles || []).map((id: string) => new ObjectId(id))
 
-    const likedProfiles = await Profile.find({ _id: { $in: likedIds } })
+    const likedProfiles = await profiles.find({ _id: { $in: likedIds } }).toArray()
 
-    return NextResponse.json({ success: true, profiles: likedProfiles })
+    // Transform the data to include only necessary fields
+    const transformedProfiles = likedProfiles.map(profile => ({
+      _id: profile._id.toString(),
+      name: profile.name,
+      age: profile.age,
+      occupation: profile.occupation,
+      location: profile.location,
+      bio: profile.bio,
+      budget: profile.budget,
+      cleanliness: profile.lifestyle?.cleanliness || 50,
+      interests: profile.interests || [],
+      profileImage: profile.profileImage || "",
+      userType: profile.userType,
+      hasPets: profile.hasPets,
+      isSmoker: profile.isSmoker,
+      lifestyle: profile.lifestyle,
+      moveInDate: profile.moveInDate,
+      createdAt: profile.createdAt
+    }))
+
+    return NextResponse.json({ 
+      success: true, 
+      profiles: transformedProfiles,
+      count: transformedProfiles.length
+    })
   } catch (err) {
     console.error("Fetch liked full profiles error:", err)
     return NextResponse.json({ success: false, error: "Server error" }, { status: 500 })

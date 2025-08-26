@@ -2,22 +2,22 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { MessageCircle, Calendar, User, Home, Heart, TrendingUp, Users, Clock, ArrowRight, Plus, Edit3 } from "lucide-react"
 import Link from "next/link"
-import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { getCollection } from "@/lib/db"
 import { ObjectId } from "mongodb"
+import { getCurrentUser } from "@/lib/auth"
 
 export default async function DashboardPage() {
-  const cookieStore = await cookies()
-const email = cookieStore.get("user_email")?.value
-
-  if (!email) {
+  const user = await getCurrentUser()
+  
+  if (!user) {
     redirect("/login")
   }
 
   const profiles = await getCollection("profiles")
-  const profile = await profiles.findOne({ email })
-if (!profile) {
+  const profile = await profiles.findOne({ email: user.email })
+  
+  if (!profile) {
     redirect("/login") // just in case email is stale or user was deleted
   }
   const myIdString = profile._id.toString();          // convert my ObjectId to string
@@ -31,7 +31,7 @@ const mutualMatches = await profiles.find({
 
 const matchCount = mutualMatches.length
 const messagesCol = await getCollection("messages")
-const unreadCount = await messagesCol.countDocuments({ to: email, read: false })
+const unreadCount = await messagesCol.countDocuments({ to: user.email, read: false })
 
 console.log("Profile ID:", profile._id)
 console.log("Liked profiles:", profile.likedProfiles)
