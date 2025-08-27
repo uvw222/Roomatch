@@ -32,6 +32,11 @@ export async function GET() {
       return match.createdAt && new Date(match.createdAt) > new Date(lastLoginAt)
     })
 
+    // Check for unread match notifications
+    const unreadNotifications = (currentUser.matchNotifications || [])
+      .filter((notification: any) => !notification.read)
+      .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+
     // Transform the data to include only necessary fields
     const transformedMatches = newMatches.map(profile => ({
       _id: profile._id.toString(),
@@ -42,10 +47,24 @@ export async function GET() {
       createdAt: profile.createdAt
     }))
 
+    // Transform match notifications
+    const transformedNotifications = unreadNotifications.map((notification: any) => ({
+      name: notification.matchName,
+      userType: notification.matchUserType,
+      profileImage: notification.matchProfileImage || "",
+      email: notification.matchEmail,
+      createdAt: notification.createdAt,
+      isNotification: true
+    }))
+
+    // Combine new matches and unread notifications, prioritizing notifications
+    const allNewMatches = [...transformedNotifications, ...transformedMatches]
+
     return NextResponse.json({ 
       success: true, 
-      newMatches: transformedMatches,
-      count: transformedMatches.length
+      newMatches: allNewMatches,
+      count: allNewMatches.length,
+      unreadNotifications: transformedNotifications
     })
   } catch (err) {
     console.error("New matches fetch error:", err)

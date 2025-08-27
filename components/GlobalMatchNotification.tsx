@@ -11,6 +11,7 @@ interface MatchData {
   userType: string
   profileImage?: string
   email: string
+  isNotification?: boolean
 }
 
 export default function GlobalMatchNotification() {
@@ -58,13 +59,14 @@ export default function GlobalMatchNotification() {
         const data = await res.json()
         
         if (data.success && data.newMatches.length > 0) {
-          // Show notification for the most recent new match
+          // Show notification for the most recent new match or notification
           const latestMatch = data.newMatches[0]
           setMatchData({
             name: latestMatch.name,
             userType: latestMatch.userType,
             profileImage: latestMatch.profileImage,
-            email: latestMatch.email
+            email: latestMatch.email,
+            isNotification: latestMatch.isNotification
           })
           setShowNotification(true)
         }

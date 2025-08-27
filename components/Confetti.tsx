@@ -21,7 +21,8 @@ interface Particle {
 
 const colors = [
   '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57',
-  '#ff9ff3', '#54a0ff', '#5f27cd', '#00d2d3', '#ff9f43'
+  '#ff9ff3', '#54a0ff', '#5f27cd', '#00d2d3', '#ff9f43',
+  '#ff4757', '#2ed573', '#1e90ff', '#ffa502', '#ff6348'
 ]
 
 export default function Confetti({ isActive, onComplete }: ConfettiProps) {
@@ -44,18 +45,18 @@ export default function Confetti({ isActive, onComplete }: ConfettiProps) {
 
     // Create particles
     const particles: Particle[] = []
-    const particleCount = 150
+    const particleCount = 200 // Increased particle count for more celebration
 
     for (let i = 0; i < particleCount; i++) {
       particles.push({
         x: Math.random() * canvas.width,
         y: -10,
-        vx: (Math.random() - 0.5) * 8,
-        vy: Math.random() * 3 + 2,
+        vx: (Math.random() - 0.5) * 10, // Increased velocity
+        vy: Math.random() * 4 + 3, // Increased fall speed
         rotation: Math.random() * 360,
-        rotationSpeed: (Math.random() - 0.5) * 10,
+        rotationSpeed: (Math.random() - 0.5) * 15, // Increased rotation speed
         color: colors[Math.floor(Math.random() * colors.length)],
-        size: Math.random() * 8 + 4,
+        size: Math.random() * 12 + 6, // Increased size
         opacity: 1
       })
     }
@@ -75,11 +76,11 @@ export default function Confetti({ isActive, onComplete }: ConfettiProps) {
         particle.rotation += particle.rotationSpeed
 
         // Add gravity
-        particle.vy += 0.1
+        particle.vy += 0.15
 
         // Reduce opacity over time
-        if (particle.y > canvas.height * 0.5) {
-          particle.opacity -= 0.01
+        if (particle.y > canvas.height * 0.3) {
+          particle.opacity -= 0.008
         }
 
         // Draw particle
@@ -89,9 +90,28 @@ export default function Confetti({ isActive, onComplete }: ConfettiProps) {
           ctx.translate(particle.x, particle.y)
           ctx.rotate((particle.rotation * Math.PI) / 180)
 
-          // Draw confetti piece
+          // Draw confetti piece with more variety
           ctx.fillStyle = particle.color
-          ctx.fillRect(-particle.size / 2, -particle.size / 2, particle.size, particle.size)
+          
+          // Random confetti shapes
+          const shapeType = Math.random()
+          if (shapeType < 0.3) {
+            // Square
+            ctx.fillRect(-particle.size / 2, -particle.size / 2, particle.size, particle.size)
+          } else if (shapeType < 0.6) {
+            // Circle
+            ctx.beginPath()
+            ctx.arc(0, 0, particle.size / 2, 0, 2 * Math.PI)
+            ctx.fill()
+          } else {
+            // Triangle
+            ctx.beginPath()
+            ctx.moveTo(0, -particle.size / 2)
+            ctx.lineTo(-particle.size / 2, particle.size / 2)
+            ctx.lineTo(particle.size / 2, particle.size / 2)
+            ctx.closePath()
+            ctx.fill()
+          }
 
           ctx.restore()
           activeParticles++

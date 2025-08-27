@@ -18,27 +18,47 @@ export async function GET() {
     const oppositeType = getOppositeUserType(currentUser.userType)
 
     // Convert all excluded profile IDs to ObjectId
+    // Only exclude profiles that the current user has already liked or disliked
     const excludedIds = [
       ...(currentUser.likedProfiles || []),
       ...(currentUser.dislikedProfiles || [])
     ].map(id => new ObjectId(id))
 
+    console.log("Debug - Current user:", {
+      email: currentUser.email,
+      userType: currentUser.userType,
+      oppositeType: oppositeType,
+      likedProfiles: currentUser.likedProfiles,
+      dislikedProfiles: currentUser.dislikedProfiles,
+      excludedIds: excludedIds
+    })
+
     // Find profiles that match the criteria:
     // 1. Opposite user type
-    // 2. Not already liked or disliked
+    // 2. Not already liked or disliked by current user
     // 3. Not the current user
     // 4. Has completed profile (has name and basic info)
     const matches = await profiles.find({
       userType: oppositeType,
       _id: {
-        $nin: [...excludedIds, currentUser._id]  // Exclude self and previously interacted profiles
+        $nin: [...excludedIds, currentUser._id]  // Exclude self and profiles current user has interacted with
       },
-      name: { $exists: true, $ne: "" }, // Must have a name
-      $or: [
-        { profileImage: { $exists: true, $ne: "" } }, // Has profile image
-        { bio: { $exists: true, $ne: "" } } // Or has bio
-      ]
+      name: { $exists: true, $ne: "" } // Must have a name
+      // Temporarily removed profile completion requirements to debug
+      // $or: [
+      //   { profileImage: { $exists: true, $ne: "" } }, // Has profile image
+      //   { bio: { $exists: true, $ne: "" } } // Or has bio
+      // ]
     }).limit(50).toArray() // Limit results for performance
+
+    console.log("Debug - Found matches:", matches.length)
+    console.log("Debug - Match details:", matches.map(m => ({
+      _id: m._id.toString(),
+      name: m.name,
+      userType: m.userType,
+      hasProfileImage: !!m.profileImage,
+      hasBio: !!m.bio
+    })))
 
     // Transform the data to include only necessary fields
     const transformedMatches = matches.map(profile => ({
@@ -63,7 +83,14 @@ export async function GET() {
       success: true, 
       matches: transformedMatches,
       userType: currentUser.userType,
-      oppositeType: oppositeType
+      oppositeType: oppositeType,
+      debug: {
+        currentUserEmail: currentUser.email,
+        currentUserType: currentUser.userType,
+        oppositeType: oppositeType,
+        excludedIds: excludedIds.map(id => id.toString()),
+        totalProfilesFound: matches.length
+      }
     })
   } catch (err) {
     console.error("Match fetch error:", err)

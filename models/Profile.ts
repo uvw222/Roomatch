@@ -49,6 +49,24 @@ const ProfileSchema = new mongoose.Schema({
   type: Number,
   default: 0,
 },
+  // Match notifications for users who were disconnected when matches occurred
+  matchNotifications: {
+    type: [{
+      matchEmail: String,
+      matchName: String,
+      matchUserType: String,
+      matchProfileImage: String,
+      createdAt: {
+        type: Date,
+        default: Date.now,
+      },
+      read: {
+        type: Boolean,
+        default: false,
+      }
+    }],
+    default: [],
+  },
   createdAt: {
     type: Date,
     default: Date.now,

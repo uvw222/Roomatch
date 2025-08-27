@@ -52,8 +52,43 @@ export async function POST(req: Request) {
     if (targetProfile.likedProfiles?.includes(currentUser._id.toString())) {
       // It's a mutual match! Send notifications to both users
       const io = getSocket()
+      
+      // Store match notification for current user (in case they're offline)
+      await profiles.updateOne(
+        { email: user.email },
+        { 
+          $push: { 
+            matchNotifications: {
+              matchEmail: targetProfile.email,
+              matchName: targetProfile.name,
+              matchUserType: targetProfile.userType,
+              matchProfileImage: targetProfile.profileImage,
+              createdAt: new Date(),
+              read: false
+            }
+          } 
+        } as any
+      )
+
+      // Store match notification for target user (in case they're offline)
+      await profiles.updateOne(
+        { email: targetProfile.email },
+        { 
+          $push: { 
+            matchNotifications: {
+              matchEmail: currentUser.email,
+              matchName: currentUser.name,
+              matchUserType: currentUser.userType,
+              matchProfileImage: currentUser.profileImage,
+              createdAt: new Date(),
+              read: false
+            }
+          } 
+        } as any
+      )
+
       if (io) {
-        // Send notification to the current user
+        // Send real-time notification to the current user
         io.to(user.email).emit('newMatch', {
           type: 'newMatch',
           match: {
@@ -64,7 +99,7 @@ export async function POST(req: Request) {
           }
         })
 
-        // Send notification to the target user
+        // Send real-time notification to the target user
         io.to(targetProfile.email).emit('newMatch', {
           type: 'newMatch',
           match: {

@@ -13,6 +13,7 @@ interface MatchNotificationProps {
     userType: string
     profileImage?: string
     email: string
+    isNotification?: boolean
   } | null
   onClose: () => void
   onViewProfile: (email: string) => void
@@ -31,6 +32,12 @@ export default function MatchNotification({
   useEffect(() => {
     if (isVisible && matchData) {
       setShowConfetti(true)
+      
+      // Mark notification as read if it's from stored notifications
+      if (matchData.isNotification) {
+        markNotificationAsRead(matchData.email)
+      }
+      
       // Auto-hide after 8 seconds
       const timer = setTimeout(() => {
         onClose()
@@ -38,6 +45,21 @@ export default function MatchNotification({
       return () => clearTimeout(timer)
     }
   }, [isVisible, matchData, onClose])
+
+  const markNotificationAsRead = async (matchEmail: string) => {
+    try {
+      await fetch('/api/matches/mark-notifications-read', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ matchEmail }),
+        credentials: 'include'
+      })
+    } catch (error) {
+      console.error('Error marking notification as read:', error)
+    }
+  }
 
   const handleConfettiComplete = () => {
     setShowConfetti(false)
@@ -61,7 +83,7 @@ export default function MatchNotification({
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-slate-800">It's a Match! 🎉</h3>
-                    <p className="text-sm text-slate-600">You and {matchData.name} liked each other</p>
+                    <p className="text-sm text-slate-600">You matched with {matchData.name}</p>
                   </div>
                 </div>
                 <Button
