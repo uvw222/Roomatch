@@ -108,7 +108,7 @@ export default function GlobalMatchNotification() {
   }
 
   const handleStartChat = (email: string) => {
-    router.push(`/chat?other=${email}`)
+    router.push(`/chat?other=${encodeURIComponent(email)}`)
     handleClose()
   }
 

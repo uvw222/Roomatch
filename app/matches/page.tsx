@@ -93,7 +93,7 @@ export default function MatchesPage() {
 
   const handleStartChat = (email: string) => {
     // Navigate to chat page
-    router.push(`/chat?other=${email}`)
+    router.push(`/chat?other=${encodeURIComponent(email)}`)
   }
 
 

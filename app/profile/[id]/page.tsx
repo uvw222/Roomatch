@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { notFound } from "next/navigation"
+import { notFound, useRouter } from "next/navigation"
 import connectToDatabase from "@/lib/mongodb"
 import Profile from "@/models/Profile"
 import SmartMap from "@/components/SmartMap"
@@ -51,6 +51,7 @@ type ProfileType = {
   profileImage: string
   occupation: string
   location: string
+  email: string
   coordinates?: {
     latitude: number
     longitude: number
@@ -77,6 +78,7 @@ type ProfileType = {
 
 export default function ProfilePage(props: { params: { id: string } }) {
   const { id } = props.params;
+  const router = useRouter();
   const [profile, setProfile] = useState<ProfileType | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isLiked, setIsLiked] = useState(false)
@@ -289,7 +291,11 @@ export default function ProfilePage(props: { params: { id: string } }) {
                     )}
                   </div>
 
-                  <Button variant="outline" className="w-full">
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => router.push(`/chat?other=${encodeURIComponent(profile.email)}`)}
+                  >
                     <MessageCircle className="h-4 w-4 mr-2" />
                     Send Message
                   </Button>
