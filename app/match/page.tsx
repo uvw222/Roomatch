@@ -212,14 +212,27 @@ export default function MatchPage() {
     const endpoint = direction === "right" ? `${process.env.NEXT_PUBLIC_API_URL}/api/match/like` : `${process.env.NEXT_PUBLIC_API_URL}/api/match/dislike`
 
     try {
-      await fetch(endpoint, {
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ targetProfileId: targetId }),
       })
 
+      const data = await response.json()
+
       if (direction === "right") {
         setMatches((prev) => [...prev, targetId])
+        
+        // Check if this created a mutual match
+        if (data.success && data.isMatch && data.match) {
+          // Trigger immediate match notification for the current user
+          const event = new CustomEvent('showMatchNotification', {
+            detail: {
+              match: data.match
+            }
+          })
+          window.dispatchEvent(event)
+        }
       }
     } catch (error) {
       console.error("Error swiping:", error)

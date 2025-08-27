@@ -47,6 +47,23 @@ export default function GlobalMatchNotification() {
     }
   }, [user?.email])
 
+  // Listen for immediate match notifications from swipe actions
+  useEffect(() => {
+    const handleShowMatchNotification = (event: CustomEvent) => {
+      const match = event.detail.match
+      if (match) {
+        setMatchData(match)
+        setShowNotification(true)
+      }
+    }
+
+    window.addEventListener('showMatchNotification', handleShowMatchNotification as EventListener)
+
+    return () => {
+      window.removeEventListener('showMatchNotification', handleShowMatchNotification as EventListener)
+    }
+  }, [])
+
   // Check for new matches when user logs in
   useEffect(() => {
     if (!user?.email) return

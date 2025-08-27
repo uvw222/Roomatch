@@ -49,6 +49,7 @@ export async function POST(req: Request) {
     }
 
     // Check if this creates a mutual match
+    let matchData = null
     if (targetProfile.likedProfiles?.includes(currentUser._id.toString())) {
       // It's a mutual match! Send notifications to both users
       const io = getSocket()
@@ -87,16 +88,19 @@ export async function POST(req: Request) {
         } as any
       )
 
+      // Prepare match data for response
+      matchData = {
+        name: targetProfile.name,
+        userType: targetProfile.userType,
+        profileImage: targetProfile.profileImage,
+        email: targetProfile.email
+      }
+
       if (io) {
         // Send real-time notification to the current user
         io.to(user.email).emit('newMatch', {
           type: 'newMatch',
-          match: {
-            name: targetProfile.name,
-            userType: targetProfile.userType,
-            profileImage: targetProfile.profileImage,
-            email: targetProfile.email
-          }
+          match: matchData
         })
 
         // Send real-time notification to the target user
@@ -112,7 +116,11 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ 
+      success: true, 
+      isMatch: !!matchData,
+      match: matchData
+    })
   } catch (error) {
     console.error("Like error:", error)
     return NextResponse.json({ success: false, error: "Server error" }, { status: 500 })
