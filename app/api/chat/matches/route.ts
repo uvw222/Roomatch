@@ -63,7 +63,6 @@ export async function GET() {
         name: profile.name,
         email: profile.email,
         profileImage: profile.profileImage || "",
-        userType: profile.userType,
         lastMessage: chatInfo.lastMessage,
         lastTime: chatInfo.lastTime,
         unread: chatInfo.unread,

@@ -91,13 +91,17 @@ export default function ProfilePage(props: { params: { id: string } }) {
 
   const fetchProfile = async () => {
     try {
+      // Check if the ID is an email (contains @) or username
+      const isEmail = id.includes('@')
+      const endpoint = isEmail ? `/api/profile/${id}` : `/api/profile/by-username/${id}`
+      
       // Increment views
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/${id}/view`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}/view`, {
         method: "POST"
       })
       
       // Fetch profile data
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/${id}`)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`)
       const data = await res.json()
       
       if (data.success) {

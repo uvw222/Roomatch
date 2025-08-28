@@ -12,16 +12,13 @@ import {
   Send, 
   User, 
   Search, 
-  MoreVertical, 
-  Phone, 
-  Video, 
-  ArrowLeft,
   Heart,
   MessageCircle,
   MapPin,
   Calendar,
   Users,
-  Clock
+  Clock,
+  Bell
 } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { getSocketClient } from "@/lib/socketClient";
@@ -33,7 +30,6 @@ type MatchedUser = {
   email: string;
   name: string;
   profileImage: string;
-  userType: string;
   lastMessage: string;
   lastTime: Date;
   unread: number;
@@ -64,6 +60,7 @@ export default function ChatPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [socket, setSocket] = useState<any>(null);
+  const [hasNewMessages, setHasNewMessages] = useState(false);
 
   // Get initial user from URL params (for navigation from chat buttons)
   const initialUserEmail = searchParams?.get('other');
@@ -83,6 +80,7 @@ export default function ChatPage() {
 
       // Listen for new messages
       const handleNewMessage = (message: Message) => {
+        // Check if this message is for the current conversation
         if (
           (message.from === selectedUser?.email && message.to === profile.email) ||
           (message.from === profile.email && message.to === selectedUser?.email)
@@ -90,6 +88,11 @@ export default function ChatPage() {
           setMessages(prev => [...prev, message]);
           // Update unread count in matched users list
           updateUnreadCount(message.from, 1);
+        }
+        
+        // Check if this is a new message from any user (for header notification)
+        if (message.to === profile.email && message.from !== selectedUser?.email) {
+          setHasNewMessages(true);
         }
       };
 
@@ -118,6 +121,10 @@ export default function ChatPage() {
       
       if (data.success) {
         setMatchedUsers(data.matches);
+        
+        // Check if there are any unread messages for header notification
+        const hasUnread = data.matches.some((user: MatchedUser) => user.unread > 0);
+        setHasNewMessages(hasUnread);
         
         // If there's an initial user from URL params, select them
         if (initialUserEmail && data.matches.length > 0) {
@@ -176,13 +183,19 @@ export default function ChatPage() {
 
   // Update unread count for a user
   const updateUnreadCount = (userEmail: string, change: number) => {
-    setMatchedUsers(prev => 
-      prev.map(user => 
+    setMatchedUsers(prev => {
+      const updatedUsers = prev.map(user => 
         user.email === userEmail 
           ? { ...user, unread: Math.max(0, user.unread + change) }
           : user
-      )
-    );
+      );
+      
+      // Update header notification - only show if there are any unread messages
+      const hasUnread = updatedUsers.some(user => user.unread > 0);
+      setHasNewMessages(hasUnread);
+      
+      return updatedUsers;
+    });
   };
 
   // Handle user selection
@@ -255,7 +268,7 @@ export default function ChatPage() {
   if (isLoading) {
     return (
       <div className="flex flex-col h-full pt-safe pb-safe bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex-1 flex items-center justify-center">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
             <p className="text-slate-600">Loading your matches...</p>
@@ -267,111 +280,113 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-full pt-safe pb-safe bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex-1 flex flex-col">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex-1 flex flex-col">
         {/* Enhanced Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-white/80 backdrop-blur-sm rounded-t-lg">
           <div className="space-y-1">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-              RooChat
-            </h1>
-            <p className="text-slate-600">Chat with your matches</p>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+                RooChat
+              </h1>
+              {hasNewMessages && (
+                <div className="relative">
+                  <Bell className="h-5 w-5 text-orange-500" />
+                  <div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></div>
+                </div>
+              )}
+            </div>
+            <p className="text-slate-600 text-sm">Chat with your matches</p>
           </div>
-          <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full border border-slate-200 shadow-sm">
+          <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-slate-200 shadow-sm">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
             <span className="text-sm font-medium text-slate-700">Online</span>
           </div>
         </div>
 
-        <div className="bg-white/80 backdrop-blur-sm border-0 rounded-2xl shadow-xl grid grid-cols-1 md:grid-cols-[350px_1fr] flex-1 overflow-hidden">
+        <div className="bg-white/80 backdrop-blur-sm border-0 rounded-b-lg shadow-xl grid grid-cols-1 md:grid-cols-[300px_1fr] flex-1 overflow-hidden">
           {/* -------- Enhanced Matched Users List -------- */}
-          <div className="border-r border-slate-200">
-            <div className="p-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50">
+          <div className="border-r border-slate-200 bg-white/80 backdrop-blur-sm">
+            <div className="p-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input 
                   placeholder="Search your matches..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 border-slate-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200"
+                  className="pl-10 border-slate-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200 h-9"
                 />
               </div>
             </div>
             
-            <ScrollArea className="h-[calc(var(--app-height)-280px)] md:h-[calc(var(--app-height)-280px)]">
-              {matchedUsers.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Heart className="h-8 w-8 text-orange-500" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-800 mb-2">No matches yet</h3>
-                  <p className="text-slate-600 mb-4">Start swiping to find potential roommates</p>
-                  <Button 
-                    onClick={() => router.push('/match')}
-                    className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-                  >
-                    Go to Matches
-                  </Button>
-                </div>
-              ) : (
-                filteredUsers.map((user) => (
-                  <div
-                    key={user._id}
-                    onClick={() => handleUserSelect(user)}
-                    className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-slate-50 transition-all duration-200 ${
-                      selectedUser?._id === user._id ? "bg-gradient-to-r from-orange-50 to-red-50 border-r-2 border-orange-500" : ""
-                    }`}
-                  >
-                    <div className="relative">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={user.profileImage} alt={user.name} />
-                        <AvatarFallback className="bg-gradient-to-br from-orange-100 to-red-100 text-orange-600">
-                          {user.name.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      {user.unread > 0 && (
-                        <div className="absolute -top-1 -right-1 h-6 w-6 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs flex items-center justify-center font-semibold shadow-lg">
-                          {user.unread}
-                        </div>
-                      )}
+            <ScrollArea className="h-[calc(100vh-240px)] users-list-scroll">
+              <div className="p-2">
+                {matchedUsers.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Heart className="h-6 w-6 text-orange-500" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-slate-800 truncate">{user.name}</h3>
-                          <Badge variant="secondary" className="text-xs">
-                            {user.userType === 'renter' ? 'Looking' : 'Has Room'}
-                          </Badge>
-                        </div>
-                        <span className="text-xs text-slate-500 font-medium">{user.time}</span>
+                    <h3 className="text-sm font-semibold text-slate-800 mb-2">No matches yet</h3>
+                    <p className="text-xs text-slate-600 mb-3">Start swiping to find potential roommates</p>
+                    <Button 
+                      onClick={() => router.push('/match')}
+                      className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-xs h-8"
+                    >
+                      Go to Matches
+                    </Button>
+                  </div>
+                ) : (
+                  filteredUsers.map((user) => (
+                    <div
+                      key={user._id}
+                      onClick={() => handleUserSelect(user)}
+                      className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-slate-50 transition-all duration-200 rounded-lg mb-1 ${
+                        selectedUser?._id === user._id ? "bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200" : ""
+                      }`}
+                    >
+                      <div className="relative">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={user.profileImage} alt={user.name} />
+                          <AvatarFallback className="bg-gradient-to-br from-orange-100 to-red-100 text-orange-600 text-sm">
+                            {user.name.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        {user.unread > 0 && (
+                          <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs flex items-center justify-center font-semibold shadow-lg">
+                            {user.unread}
+                          </div>
+                        )}
                       </div>
-                      <p className="text-sm text-slate-600 truncate mt-1">{user.lastMessage}</p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start">
+                          <h3 className="font-semibold text-slate-800 truncate text-sm">{user.name}</h3>
+                          <span className="text-xs text-slate-500 font-medium">{user.time}</span>
+                        </div>
+                        <p className="text-xs text-slate-600 truncate mt-1">{user.lastMessage}</p>
+                      </div>
                     </div>
-                  </div>
-                ))
-              )}
+                  ))
+                )}
+              </div>
             </ScrollArea>
           </div>
 
           {/* -------- Enhanced Conversation -------- */}
           {selectedUser ? (
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col h-full bg-white/80 backdrop-blur-sm">
               {/* Enhanced Header */}
-              <div className="p-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 flex items-center justify-between">
+              <div className="p-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12">
+                  <Avatar className="h-10 w-10">
                     <AvatarImage src={selectedUser.profileImage} alt={selectedUser.name} />
-                    <AvatarFallback className="bg-gradient-to-br from-orange-100 to-red-100 text-orange-600">
+                    <AvatarFallback className="bg-gradient-to-br from-orange-100 to-red-100 text-orange-600 text-sm">
                       {selectedUser.name.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <h2 className="font-semibold text-slate-800">{selectedUser.name}</h2>
+                    <h2 className="font-semibold text-slate-800 text-sm">{selectedUser.name}</h2>
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <p className="text-sm text-slate-600">Online</p>
-                      <Badge variant="secondary" className="text-xs">
-                        {selectedUser.userType === 'renter' ? 'Looking for Room' : 'Has Room Available'}
-                      </Badge>
+                      <p className="text-xs text-slate-600">Online</p>
                     </div>
                   </div>
                 </div>
@@ -379,33 +394,24 @@ export default function ChatPage() {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="h-9 w-9 p-0 hover:bg-slate-100"
-                    onClick={() => router.push(`/profile/${selectedUser.email}`)}
+                    className="h-8 w-8 p-0 hover:bg-slate-100"
+                    onClick={() => router.push(`/profile/${selectedUser.name}`)}
                   >
                     <User className="h-4 w-4 text-slate-600" />
-                  </Button>
-                  <Button variant="ghost" size="sm" className="h-9 w-9 p-0 hover:bg-slate-100">
-                    <Phone className="h-4 w-4 text-slate-600" />
-                  </Button>
-                  <Button variant="ghost" size="sm" className="h-9 w-9 p-0 hover:bg-slate-100">
-                    <Video className="h-4 w-4 text-slate-600" />
-                  </Button>
-                  <Button variant="ghost" size="sm" className="h-9 w-9 p-0 hover:bg-slate-100">
-                    <MoreVertical className="h-4 w-4 text-slate-600" />
                   </Button>
                 </div>
               </div>
 
               {/* Enhanced Message list */}
-              <ScrollArea className="flex-1 p-6 chat-content-area">
-                <div className="space-y-4">
+              <ScrollArea className="flex-1 p-4 chat-content-area">
+                <div className="space-y-3">
                   {messages.length === 0 ? (
-                    <div className="text-center py-12">
-                      <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <MessageCircle className="h-8 w-8 text-blue-500" />
+                    <div className="text-center py-8">
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <MessageCircle className="h-6 w-6 text-blue-500" />
                       </div>
-                      <h3 className="text-lg font-semibold text-slate-800 mb-2">Start a conversation</h3>
-                      <p className="text-slate-600">Send a message to begin chatting with {selectedUser.name}</p>
+                      <h3 className="text-sm font-semibold text-slate-800 mb-2">Start a conversation</h3>
+                      <p className="text-xs text-slate-600">Send a message to begin chatting with {selectedUser.name}</p>
                     </div>
                   ) : (
                     messages.map((message, idx) => {
@@ -417,13 +423,13 @@ export default function ChatPage() {
                           ref={idx === messages.length - 1 ? bottomRef : null}
                         >
                           <div
-                            className={`max-w-[70%] rounded-2xl p-4 shadow-sm ${
+                            className={`max-w-[75%] rounded-2xl p-3 shadow-sm ${
                               isMyMessage
                                 ? "bg-gradient-to-r from-orange-500 to-red-500 text-white"
                                 : "bg-white border border-slate-200 text-slate-800"
                             }`}
                           >
-                            <p className="leading-relaxed">{message.text}</p>
+                            <p className="leading-relaxed text-sm">{message.text}</p>
                             <div className={`flex items-center justify-between mt-2 ${
                               isMyMessage ? "text-orange-100" : "text-slate-500"
                             }`}>
@@ -448,22 +454,22 @@ export default function ChatPage() {
               </ScrollArea>
 
               {/* Enhanced Compose box */}
-              <div className="p-4 border-t border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50">
+              <div className="p-3 border-t border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50">
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
                     handleSendMessage();
                   }}
-                  className="flex gap-3"
+                  className="flex gap-2"
                 >
                   <Input
                     value={newMessage}
                     placeholder="Type a message…"
                     onChange={(e) => setNewMessage(e.target.value)}
-                    className="flex-1 border-slate-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200"
+                    className="flex-1 border-slate-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200 h-9"
                   />
                   <Button 
-                    className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-lg hover:shadow-xl transition-all duration-200" 
+                    className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 h-9 w-9 p-0" 
                     type="submit"
                     disabled={!newMessage.trim()}
                   >
@@ -473,13 +479,13 @@ export default function ChatPage() {
               </div>
             </div>
           ) : (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex items-center justify-center h-full bg-white/80 backdrop-blur-sm">
               <div className="text-center">
-                <div className="w-20 h-20 bg-gradient-to-br from-slate-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MessageCircle className="h-10 w-10 text-slate-400" />
+                <div className="w-16 h-16 bg-gradient-to-br from-slate-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <MessageCircle className="h-8 w-8 text-slate-400" />
                 </div>
-                <h2 className="text-xl font-semibold text-slate-800 mb-2">No conversation selected</h2>
-                <p className="text-slate-600">Choose a match to start chatting</p>
+                <h2 className="text-lg font-semibold text-slate-800 mb-2">No conversation selected</h2>
+                <p className="text-sm text-slate-600">Choose a match to start chatting</p>
               </div>
             </div>
           )}

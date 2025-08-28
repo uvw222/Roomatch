@@ -18,17 +18,65 @@ import { Calendar, Heart, Home, LogOut, Menu, MessageCircle, Settings, User, Edi
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useProfileImage } from "@/hooks/useProfile"
 import { useAuth } from "@/hooks/useAuth"
+import { getSocketClient } from "@/lib/socketClient"
 
 export default function DashboardNav() {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
+  const [hasNewMessages, setHasNewMessages] = useState(false)
   const { profileImage, isLoading, refreshProfileImage } = useProfileImage()
-  const { logout } = useAuth()
+  const { logout, user } = useAuth()
   const router = useRouter()
 
   const handleLogout = async () => {
     await logout()
   }
+
+  // Check for new messages
+  useEffect(() => {
+    if (!user?.email) return;
+
+    const checkNewMessages = async () => {
+      try {
+        const res = await fetch('/api/chat/matches', {
+          credentials: 'include'
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          const hasUnread = data.matches.some((user: any) => user.unread > 0);
+          setHasNewMessages(hasUnread);
+        }
+      } catch (error) {
+        console.error('Error checking for new messages:', error);
+      }
+    };
+
+    checkNewMessages();
+
+    // Set up real-time updates using socket
+    const socket = getSocketClient(user.email);
+    if (socket) {
+      const handleNewMessage = (message: any) => {
+        if (message.to === user.email) {
+          setHasNewMessages(true);
+        }
+      };
+
+      socket.on('messages:new', handleNewMessage);
+
+      return () => {
+        socket.off('messages:new', handleNewMessage);
+      };
+    }
+  }, [user?.email]);
+
+  // Clear notifications when navigating to chat page
+  useEffect(() => {
+    if (pathname === '/chat') {
+      setHasNewMessages(false);
+    }
+  }, [pathname]);
 
   // Refresh profile image when pathname changes (e.g., when returning from profile edit)
   useEffect(() => {
@@ -43,7 +91,18 @@ export default function DashboardNav() {
     { name: "Find Match", path: "/match", icon: <Heart className="h-5 w-5" /> },
     { name: "My Matches", path: "/matches", icon: <Sparkles className="h-5 w-5" /> },
     { name: "Likes", path: "/likes", icon: <Users className="h-5 w-5" /> },
-    { name: "RooChat", path: "/chat", icon: <MessageCircle className="h-5 w-5" /> },
+    { 
+      name: "RooChat", 
+      path: "/chat", 
+      icon: (
+        <div className="relative">
+          <MessageCircle className="h-5 w-5" />
+          {hasNewMessages && (
+            <div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></div>
+          )}
+        </div>
+      )
+    },
     { name: "Calendar", path: "/calendar", icon: <Calendar className="h-5 w-5" /> },
     { name: "My Profile", path: "/profile/me", icon: <User className="h-5 w-5" /> },
   ]

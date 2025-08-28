@@ -90,18 +90,20 @@ console.log("Match count:", mutualMatches.length)
               </Card>
             </Link>
 
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 group">
-              <CardHeader className="flex flex-row items-center justify-between pb-3 space-y-0">
-                <CardTitle className="text-sm font-semibold text-slate-700">Messages</CardTitle>
-                <div className="p-2 bg-gradient-to-br from-green-100 to-emerald-100 rounded-lg group-hover:scale-110 transition-transform duration-200">
-                  <MessageCircle className="h-4 w-4 text-green-600" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-slate-800 mb-1">{unreadCount}</div>
-                <p className="text-xs text-slate-500">unread messages</p>
-              </CardContent>
-            </Card>
+            <Link href="/chat">
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 group cursor-pointer">
+                <CardHeader className="flex flex-row items-center justify-between pb-3 space-y-0">
+                  <CardTitle className="text-sm font-semibold text-slate-700">Messages</CardTitle>
+                  <div className="p-2 bg-gradient-to-br from-green-100 to-emerald-100 rounded-lg group-hover:scale-110 transition-transform duration-200">
+                    <MessageCircle className="h-4 w-4 text-green-600" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold text-slate-800 mb-1">{unreadCount}</div>
+                  <p className="text-xs text-slate-500">unread messages</p>
+                </CardContent>
+              </Card>
+            </Link>
 
             <Link href="/likes">
               <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-200 group cursor-pointer">

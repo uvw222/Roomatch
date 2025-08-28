@@ -216,4 +216,43 @@ body {
 
 .chat-content-area {
   height: calc(var(--app-height) - 8rem - var(--safe-area-inset-bottom));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Enhanced scrollbar styles for chat */
+.chat-content-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-content-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-content-area::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.chat-content-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* User list scrollbar styles */
+.users-list-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.users-list-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.users-list-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+}
+
+.users-list-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
 }
