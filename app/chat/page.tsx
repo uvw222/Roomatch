@@ -18,7 +18,9 @@ import {
   Calendar,
   Users,
   Clock,
-  Bell
+  Bell,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { getSocketClient } from "@/lib/socketClient";
@@ -61,6 +63,7 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [socket, setSocket] = useState<any>(null);
   const [hasNewMessages, setHasNewMessages] = useState(false);
+  const [isMobileUserListOpen, setIsMobileUserListOpen] = useState(false);
 
   // Get initial user from URL params (for navigation from chat buttons)
   const initialUserEmail = searchParams?.get('other');
@@ -279,113 +282,220 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen pt-safe pb-safe bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="w-[1000px] mx-auto px-4 sm:px-6 lg:px-8 flex-1 flex flex-col min-h-0">
+    <div className="flex flex-col h-[70vh] sm:h-[80vh] md:h-[90vh] pt-safe pb-safe bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="w-full md:w-[1000px] mx-auto px-2 sm:px-4 lg:px-8 flex-1 flex flex-col min-h-0">
         {/* Enhanced Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-white/80 backdrop-blur-sm rounded-t-lg flex-shrink-0">
-          <div className="space-y-1">
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+        <div className="flex items-center justify-between p-2 sm:p-3 border-b border-slate-200 bg-white/80 backdrop-blur-sm rounded-t-lg flex-shrink-0">
+          <div className="space-y-0.5 sm:space-y-1">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
                 RooChat
               </h1>
               {hasNewMessages && (
                 <div className="relative">
-                  <Bell className="h-5 w-5 text-orange-500" />
-                  <div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></div>
+                  <Bell className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-orange-500" />
+                  <div className="absolute -top-1 -right-1 h-2 w-2 sm:h-2.5 sm:w-2.5 md:h-3 md:w-3 bg-red-500 rounded-full"></div>
                 </div>
               )}
             </div>
-            <p className="text-slate-600 text-sm">Chat with your matches</p>
+            <p className="text-slate-600 text-xs sm:text-sm">Chat with your matches</p>
           </div>
-          <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-slate-200 shadow-sm">
+          <div className="hidden sm:flex items-center gap-2 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-slate-200 shadow-sm">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
             <span className="text-sm font-medium text-slate-700">Online</span>
           </div>
         </div>
 
-        <div className="bg-white/80 backdrop-blur-sm border-0 rounded-b-lg shadow-xl grid grid-cols-1 md:grid-cols-[300px_1fr] flex-1 min-h-0 overflow-hidden">
+        <div className="chat-container bg-white/80 backdrop-blur-sm border-0 rounded-b-lg shadow-xl flex flex-col md:grid md:grid-cols-[300px_1fr] flex-1 min-h-0 overflow-hidden">
           {/* -------- Enhanced Matched Users List -------- */}
-          <div className="border-r border-slate-200 bg-white/80 backdrop-blur-sm flex flex-col min-h-0">
-            <div className="p-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 flex-shrink-0">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <Input 
-                  placeholder="Search your matches..." 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 border-slate-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200 h-9"
-                />
+          <div className="border-b md:border-b-0 md:border-r border-slate-200 bg-white/80 backdrop-blur-sm flex flex-col min-h-0">
+            {/* Mobile User List Dropdown Header */}
+            <div className="md:hidden p-2 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Avatar className="h-6 w-6 sm:h-7 sm:w-7">
+                  {selectedUser ? (
+                    <AvatarImage src={selectedUser.profileImage} alt={selectedUser.name} />
+                  ) : (
+                    <AvatarFallback className="bg-gradient-to-br from-orange-100 to-red-100 text-orange-600 text-xs">
+                      <Users className="h-3 w-3 sm:h-4 sm:w-4" />
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-slate-800 text-xs">
+                    {selectedUser ? selectedUser.name : "Select a match"}
+                  </h3>
+                  <p className="text-xs text-slate-600">
+                    {selectedUser ? "Tap to change" : "Choose someone to chat with"}
+                  </p>
+                </div>
               </div>
-            </div>
-            
-            <ScrollArea className="flex-1 min-h-0 users-list-scroll">
-              <div className="p-2">
-                {matchedUsers.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <Heart className="h-6 w-6 text-orange-500" />
-                    </div>
-                    <h3 className="text-sm font-semibold text-slate-800 mb-2">No matches yet</h3>
-                    <p className="text-xs text-slate-600 mb-3">Start swiping to find potential roommates</p>
-                    <Button 
-                      onClick={() => router.push('/match')}
-                      className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-xs h-8"
-                    >
-                      Go to Matches
-                    </Button>
-                  </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsMobileUserListOpen(!isMobileUserListOpen)}
+                className="h-6 w-6 sm:h-7 sm:w-7 p-0 hover:bg-slate-100"
+              >
+                {isMobileUserListOpen ? (
+                  <ChevronUp className="h-3 w-3 sm:h-4 sm:w-4 text-slate-600" />
                 ) : (
-                  filteredUsers.map((user) => (
-                    <div
-                      key={user._id}
-                      onClick={() => handleUserSelect(user)}
-                      className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-slate-50 transition-all duration-200 rounded-lg mb-1 ${
-                        selectedUser?._id === user._id ? "bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200" : ""
-                      }`}
-                    >
-                      <div className="relative">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={user.profileImage} alt={user.name} />
-                          <AvatarFallback className="bg-gradient-to-br from-orange-100 to-red-100 text-orange-600 text-sm">
-                            {user.name.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        {user.unread > 0 && (
-                          <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs flex items-center justify-center font-semibold shadow-lg">
-                            {user.unread}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start">
-                          <h3 className="font-semibold text-slate-800 truncate text-sm">{user.name}</h3>
-                          <span className="text-xs text-slate-500 font-medium">{user.time}</span>
-                        </div>
-                        <p className="text-xs text-slate-600 truncate mt-1">{user.lastMessage}</p>
-                      </div>
-                    </div>
-                  ))
+                  <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 text-slate-600" />
                 )}
+              </Button>
+            </div>
+
+            {/* Mobile User List Dropdown */}
+            <div className={`md:hidden ${isMobileUserListOpen ? 'block' : 'hidden'} border-b border-slate-200 bg-white/80 backdrop-blur-sm`}>
+              <div className="p-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input 
+                    placeholder="Search your matches..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 border-slate-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200 h-9"
+                  />
+                </div>
               </div>
-            </ScrollArea>
+              
+              <ScrollArea className="max-h-64 users-list-scroll">
+                <div className="p-2">
+                  {matchedUsers.length === 0 ? (
+                    <div className="text-center py-6">
+                      <div className="w-10 h-10 bg-gradient-to-br from-orange-100 to-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <Heart className="h-5 w-5 text-orange-500" />
+                      </div>
+                      <h3 className="text-xs font-semibold text-slate-800 mb-1">No matches yet</h3>
+                      <p className="text-xs text-slate-600 mb-2">Start swiping to find potential roommates</p>
+                      <Button 
+                        onClick={() => router.push('/match')}
+                        className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-xs h-7"
+                      >
+                        Go to Matches
+                      </Button>
+                    </div>
+                  ) : (
+                    filteredUsers.map((user) => (
+                      <div
+                        key={user._id}
+                        onClick={() => {
+                          handleUserSelect(user);
+                          setIsMobileUserListOpen(false);
+                        }}
+                        className={`flex items-center gap-2 p-2 cursor-pointer hover:bg-slate-50 transition-all duration-200 rounded-lg mb-1 ${
+                          selectedUser?._id === user._id ? "bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200" : ""
+                        }`}
+                      >
+                        <div className="relative">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={user.profileImage} alt={user.name} />
+                            <AvatarFallback className="bg-gradient-to-br from-orange-100 to-red-100 text-orange-600 text-xs">
+                              {user.name.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          {user.unread > 0 && (
+                            <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs flex items-center justify-center font-semibold shadow-lg">
+                              {user.unread}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-start">
+                            <h3 className="font-semibold text-slate-800 truncate text-xs">{user.name}</h3>
+                            <span className="text-xs text-slate-500 font-medium">{user.time}</span>
+                          </div>
+                          <p className="text-xs text-slate-600 truncate mt-1">{user.lastMessage}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
+
+            {/* Desktop User List */}
+            <div className="hidden md:block">
+              <div className="p-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input 
+                    placeholder="Search your matches..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 border-slate-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200 h-9"
+                  />
+                </div>
+              </div>
+              
+              <ScrollArea className="flex-1 min-h-0 users-list-scroll">
+                <div className="p-2">
+                  {matchedUsers.length === 0 ? (
+                    <div className="text-center py-8">
+                      <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <Heart className="h-6 w-6 text-orange-500" />
+                      </div>
+                      <h3 className="text-sm font-semibold text-slate-800 mb-2">No matches yet</h3>
+                      <p className="text-xs text-slate-600 mb-3">Start swiping to find potential roommates</p>
+                      <Button 
+                        onClick={() => router.push('/match')}
+                        className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-xs h-8"
+                      >
+                        Go to Matches
+                      </Button>
+                    </div>
+                  ) : (
+                    filteredUsers.map((user) => (
+                      <div
+                        key={user._id}
+                        onClick={() => handleUserSelect(user)}
+                        className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-slate-50 transition-all duration-200 rounded-lg mb-1 ${
+                          selectedUser?._id === user._id ? "bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200" : ""
+                        }`}
+                      >
+                        <div className="relative">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={user.profileImage} alt={user.name} />
+                            <AvatarFallback className="bg-gradient-to-br from-orange-100 to-red-100 text-orange-600 text-sm">
+                              {user.name.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          {user.unread > 0 && (
+                            <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs flex items-center justify-center font-semibold shadow-lg">
+                              {user.unread}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-start">
+                            <h3 className="font-semibold text-slate-800 truncate text-sm">{user.name}</h3>
+                            <span className="text-xs text-slate-500 font-medium">{user.time}</span>
+                          </div>
+                          <p className="text-xs text-slate-600 truncate mt-1">{user.lastMessage}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
           </div>
 
           {/* -------- Enhanced Conversation -------- */}
           {selectedUser ? (
-            <div className="flex flex-col h-full bg-white/80 backdrop-blur-sm min-h-0">
+            <div className="flex flex-col h-full bg-white/80 backdrop-blur-sm min-h-0 md:min-h-0">
               {/* Row 1: Conversation Header */}
-              <div className="p-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 flex items-center justify-between flex-shrink-0">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
+              <div className="p-2 sm:p-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 flex items-center justify-between flex-shrink-0">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <Avatar className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 lg:h-10 lg:w-10">
                     <AvatarImage src={selectedUser.profileImage} alt={selectedUser.name} />
-                    <AvatarFallback className="bg-gradient-to-br from-orange-100 to-red-100 text-orange-600 text-sm">
+                    <AvatarFallback className="bg-gradient-to-br from-orange-100 to-red-100 text-orange-600 text-xs sm:text-sm">
                       {selectedUser.name.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <h2 className="font-semibold text-slate-800 text-sm">{selectedUser.name}</h2>
+                    <h2 className="font-semibold text-slate-800 text-xs sm:text-sm">{selectedUser.name}</h2>
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full animate-pulse"></div>
                       <p className="text-xs text-slate-600">Online</p>
                     </div>
                   </div>
@@ -394,24 +504,24 @@ export default function ChatPage() {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="h-8 w-8 p-0 hover:bg-slate-100"
+                    className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 lg:h-8 lg:w-8 p-0 hover:bg-slate-100"
                     onClick={() => router.push(`/profile/${selectedUser.name}`)}
                   >
-                    <User className="h-4 w-4 text-slate-600" />
+                    <User className="h-2.5 w-2.5 sm:h-3 sm:w-3 md:h-3.5 md:w-3.5 lg:h-4 lg:w-4 text-slate-600" />
                   </Button>
                 </div>
               </div>
 
               {/* Row 2: Messages Area - Fixed height with scroll */}
               <div className="flex-1 min-h-0 overflow-hidden">
-                <div className="h-full overflow-y-auto p-4 messages-container">
-                  <div className="space-y-3">
+                <div className="h-full overflow-y-auto p-2 sm:p-4 messages-container">
+                  <div className="space-y-2 sm:space-y-3">
                     {messages.length === 0 ? (
-                      <div className="text-center py-8">
-                        <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                          <MessageCircle className="h-6 w-6 text-blue-500" />
+                      <div className="text-center py-6 sm:py-8">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3">
+                          <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 text-blue-500" />
                         </div>
-                        <h3 className="text-sm font-semibold text-slate-800 mb-2">Start a conversation</h3>
+                        <h3 className="text-xs sm:text-sm font-semibold text-slate-800 mb-1 sm:mb-2">Start a conversation</h3>
                         <p className="text-xs text-slate-600">Send a message to begin chatting with {selectedUser.name}</p>
                       </div>
                     ) : (
@@ -424,14 +534,14 @@ export default function ChatPage() {
                             ref={idx === messages.length - 1 ? bottomRef : null}
                           >
                             <div
-                              className={`max-w-[75%] rounded-2xl p-3 shadow-sm ${
+                              className={`max-w-[85%] sm:max-w-[75%] rounded-2xl p-2 sm:p-3 shadow-sm ${
                                 isMyMessage
                                   ? "bg-gradient-to-r from-orange-500 to-red-500 text-white"
                                   : "bg-white border border-slate-200 text-slate-800"
                               }`}
                             >
-                              <p className="leading-relaxed text-sm">{message.text}</p>
-                              <div className={`flex items-center justify-between mt-2 ${
+                              <p className="leading-relaxed text-xs sm:text-sm">{message.text}</p>
+                              <div className={`flex items-center justify-between mt-1.5 sm:mt-2 ${
                                 isMyMessage ? "text-orange-100" : "text-slate-500"
                               }`}>
                                 <span className="text-xs">
@@ -456,26 +566,26 @@ export default function ChatPage() {
               </div>
 
               {/* Row 3: Compose box */}
-              <div className="p-3 border-t border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 flex-shrink-0">
+              <div className="p-3 sm:p-4 border-t border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 flex-shrink-0">
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
                     handleSendMessage();
                   }}
-                  className="flex gap-2"
+                  className="flex gap-3"
                 >
                   <Input
                     value={newMessage}
                     placeholder="Type a message…"
                     onChange={(e) => setNewMessage(e.target.value)}
-                    className="flex-1 border-slate-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200 h-9"
+                    className="flex-1 border-slate-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200 h-10 sm:h-11 text-sm"
                   />
                   <Button 
-                    className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 h-9 w-9 p-0" 
+                    className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-lg hover:shadow-xl transition-all duration-200 h-10 w-10 sm:h-11 sm:w-11 p-0 flex-shrink-0" 
                     type="submit"
                     disabled={!newMessage.trim()}
                   >
-                    <Send className="h-4 w-4" />
+                    <Send className="h-4 w-4 sm:h-5 sm:w-5" />
                   </Button>
                 </form>
               </div>
@@ -483,11 +593,11 @@ export default function ChatPage() {
           ) : (
             <div className="flex items-center justify-center h-full bg-white/80 backdrop-blur-sm">
               <div className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-slate-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <MessageCircle className="h-8 w-8 text-slate-400" />
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-slate-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3">
+                  <MessageCircle className="h-6 w-6 sm:h-8 sm:w-8 text-slate-400" />
                 </div>
-                <h2 className="text-lg font-semibold text-slate-800 mb-2">No conversation selected</h2>
-                <p className="text-sm text-slate-600">Choose a match to start chatting</p>
+                <h2 className="text-base sm:text-lg font-semibold text-slate-800 mb-1 sm:mb-2">No conversation selected</h2>
+                <p className="text-xs sm:text-sm text-slate-600">Choose a match to start chatting</p>
               </div>
             </div>
           )}

@@ -214,6 +214,23 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Mobile chat layout optimizations */
+@media (max-width: 768px) {
+  .chat-container {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .chat-container > * {
+    flex-shrink: 0;
+  }
+  
+  .chat-container > .flex-1 {
+    flex: 1;
+    min-height: 0;
+  }
+}
+
 /* Chat layout styles */
 .chat-content-area {
   height: 100%;
