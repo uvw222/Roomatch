@@ -123,7 +123,7 @@ export default function LikesPage() {
   }
 
   return (
-    <div className="page-content bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="page-content">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="max-w-6xl mx-auto">
           {/* Enhanced Header */}

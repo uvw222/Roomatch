@@ -240,7 +240,7 @@ export default function EditProfilePage() {
 
   if (profileLoading) {
     return (
-      <div className="page-content bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+      <div className="page-content flex items-center justify-center">
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 border-0 shadow-xl">
           <div className="flex items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
@@ -252,7 +252,7 @@ export default function EditProfilePage() {
   }
 
   return (
-    <div className="page-content bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="page-content">
       <div className="container max-w-4xl mx-auto py-8 px-4">
         {/* Enhanced Header */}
         <div className="flex items-center justify-between mb-8">

@@ -12,7 +12,7 @@ export default function MyProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="page-content bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+      <div className="page-content flex items-center justify-center">
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 border-0 shadow-xl">
           <div className="flex items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
@@ -25,7 +25,7 @@ export default function MyProfilePage() {
 
   if (!profile) {
     return (
-      <div className="page-content bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+      <div className="page-content flex items-center justify-center">
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 border-0 shadow-xl text-center">
           <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <User className="h-8 w-8 text-orange-500" />
@@ -43,7 +43,7 @@ export default function MyProfilePage() {
   }
 
   return (
-    <div className="page-content bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="page-content">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="max-w-6xl mx-auto">
           {/* Enhanced Header */}
