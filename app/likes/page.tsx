@@ -293,13 +293,6 @@ export default function LikesPage() {
                                   View Full Profile
                                 </Button>
                               </Link>
-                              {isMutualMatch && (
-                                <Link href={`/chat?other=${encodeURIComponent(profile.email || profile._id)}`} className="flex-1">
-                                  <Button variant="outline" size="sm" className="w-full px-3 bg-white/80 backdrop-blur-sm border-slate-200 hover:bg-white hover:border-slate-300 transition-all duration-200" onClick={(e) => e.stopPropagation()}>
-                                    <MessageCircle className="h-4 w-4" />
-                                  </Button>
-                                </Link>
-                              )}
                             </div>
 
                             {/* Flip Back Hint */}
