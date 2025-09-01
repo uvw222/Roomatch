@@ -27,20 +27,5 @@ export default function ViewportHandler() {
     }
   }, [])
 
-  // Handle iOS Safari address bar hiding
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 0) {
-        window.scrollTo(0, 0)
-      }
-    }
-
-    window.addEventListener("scroll", handleScroll)
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll)
-    }
-  }, [])
-
   return null
 }
