@@ -280,7 +280,7 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-screen pt-safe pb-safe bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex-1 flex flex-col min-h-0">
+      <div className="w-[1000px] mx-auto px-4 sm:px-6 lg:px-8 flex-1 flex flex-col min-h-0">
         {/* Enhanced Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-white/80 backdrop-blur-sm rounded-t-lg flex-shrink-0">
           <div className="space-y-1">
