@@ -54,7 +54,7 @@ export async function GET() {
     const transformedMatches = mutualMatches.map(profile => {
       const chatInfo = messageMap[profile.email] || {
         lastMessage: "Start a conversation!",
-        lastTime: new Date(),
+        lastTime: profile.createdAt || new Date(), // Use profile creation date as fallback
         unread: 0
       }
 
@@ -71,7 +71,12 @@ export async function GET() {
     })
 
     // Sort by last message time (most recent first)
-    transformedMatches.sort((a, b) => new Date(b.lastTime).getTime() - new Date(a.lastTime).getTime())
+    // For users with no messages, use their profile creation date as fallback
+    transformedMatches.sort((a, b) => {
+      const timeA = new Date(a.lastTime).getTime();
+      const timeB = new Date(b.lastTime).getTime();
+      return timeB - timeA; // Descending order (newest first)
+    });
 
     return NextResponse.json({ 
       success: true, 

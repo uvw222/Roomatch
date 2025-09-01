@@ -96,6 +96,23 @@ export default function ChatPage() {
         // Check if this is a new message from any user (for header notification)
         if (message.to === profile.email && message.from !== selectedUser?.email) {
           setHasNewMessages(true);
+          
+          // Update the matched users list to reflect the new message
+          setMatchedUsers(prev => {
+            const updatedUsers = prev.map(user => 
+              user.email === message.from 
+                ? { 
+                    ...user, 
+                    lastMessage: message.text,
+                    lastTime: new Date(message.timestamp),
+                    time: new Date(message.timestamp).toLocaleString()
+                  }
+                : user
+            );
+            
+            // Sort users by last message time (most recent first)
+            return sortUsersByLastMessage(updatedUsers);
+          });
         }
       };
 
@@ -123,23 +140,25 @@ export default function ChatPage() {
       const data = await res.json();
       
       if (data.success) {
-        setMatchedUsers(data.matches);
+        // Sort users by last message time (most recent first)
+        const sortedMatches = sortUsersByLastMessage(data.matches);
+        setMatchedUsers(sortedMatches);
         
         // Check if there are any unread messages for header notification
-        const hasUnread = data.matches.some((user: MatchedUser) => user.unread > 0);
+        const hasUnread = sortedMatches.some((user: MatchedUser) => user.unread > 0);
         setHasNewMessages(hasUnread);
         
         // If there's an initial user from URL params, select them
-        if (initialUserEmail && data.matches.length > 0) {
-          const initialUser = data.matches.find((user: MatchedUser) => user.email === initialUserEmail);
+        if (initialUserEmail && sortedMatches.length > 0) {
+          const initialUser = sortedMatches.find((user: MatchedUser) => user.email === initialUserEmail);
           if (initialUser) {
             setSelectedUser(initialUser);
             fetchMessages(initialUser.email);
           }
-        } else if (data.matches.length > 0) {
-          // Select first user by default
-          setSelectedUser(data.matches[0]);
-          fetchMessages(data.matches[0].email);
+        } else if (sortedMatches.length > 0) {
+          // Select first user by default (which will be the most recent)
+          setSelectedUser(sortedMatches[0]);
+          fetchMessages(sortedMatches[0].email);
         }
       }
     } catch (error) {
@@ -184,7 +203,7 @@ export default function ChatPage() {
     }
   };
 
-  // Update unread count for a user
+  // Update unread count for a user and maintain sorting by last message time
   const updateUnreadCount = (userEmail: string, change: number) => {
     setMatchedUsers(prev => {
       const updatedUsers = prev.map(user => 
@@ -197,7 +216,17 @@ export default function ChatPage() {
       const hasUnread = updatedUsers.some(user => user.unread > 0);
       setHasNewMessages(hasUnread);
       
-      return updatedUsers;
+      // Maintain sorting by last message time
+      return sortUsersByLastMessage(updatedUsers);
+    });
+  };
+
+  // Sort matched users by last message time (most recent first)
+  const sortUsersByLastMessage = (users: MatchedUser[]) => {
+    return [...users].sort((a, b) => {
+      const timeA = new Date(a.lastTime).getTime();
+      const timeB = new Date(b.lastTime).getTime();
+      return timeB - timeA; // Descending order (newest first)
     });
   };
 
@@ -238,9 +267,9 @@ export default function ChatPage() {
         setMessages(prev => [...prev, newMsg]);
         setNewMessage("");
         
-        // Update last message in matched users list
-        setMatchedUsers(prev => 
-          prev.map(user => 
+        // Update last message in matched users list and maintain sorting
+        setMatchedUsers(prev => {
+          const updatedUsers = prev.map(user => 
             user.email === selectedUser.email 
               ? { 
                   ...user, 
@@ -249,8 +278,11 @@ export default function ChatPage() {
                   time: new Date().toLocaleString()
                 }
               : user
-          )
-        );
+          );
+          
+          // Sort users by last message time (most recent first)
+          return sortUsersByLastMessage(updatedUsers);
+        });
       }
     } catch (error) {
       console.error('Error sending message:', error);
@@ -266,6 +298,22 @@ export default function ChatPage() {
   // Load data on mount
   useEffect(() => {
     fetchMatchedUsers();
+  }, [profile?.email]);
+
+  // Refresh chat list and maintain sorting
+  const refreshChatList = async () => {
+    await fetchMatchedUsers();
+  };
+
+  // Periodic refresh to ensure chat list stays sorted (every 30 seconds)
+  useEffect(() => {
+    if (profile?.email) {
+      const interval = setInterval(() => {
+        refreshChatList();
+      }, 30000); // 30 seconds
+
+      return () => clearInterval(interval);
+    }
   }, [profile?.email]);
 
   if (isLoading) {
