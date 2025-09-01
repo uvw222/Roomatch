@@ -83,10 +83,12 @@ export default function ProfilePage(props: { params: { id: string } }) {
   const [isLoading, setIsLoading] = useState(true)
   const [isLiked, setIsLiked] = useState(false)
   const [isRemoving, setIsRemoving] = useState(false)
+  const [isMutualMatch, setIsMutualMatch] = useState(false)
 
   useEffect(() => {
     fetchProfile()
     checkLikeStatus()
+    checkMutualMatch()
   }, [id])
 
   const fetchProfile = async () => {
@@ -127,6 +129,21 @@ export default function ProfilePage(props: { params: { id: string } }) {
       }
     } catch (error) {
       console.error("Error checking like status:", error)
+    }
+  }
+
+  const checkMutualMatch = async () => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/matches/mutual`)
+      const data = await res.json()
+      
+      if (data.success) {
+        // Check if this profile is in the mutual matches
+        const isMutual = data.matches.some((match: any) => match._id === id)
+        setIsMutualMatch(isMutual)
+      }
+    } catch (error) {
+      console.error("Error checking mutual match status:", error)
     }
   }
 
@@ -295,14 +312,16 @@ export default function ProfilePage(props: { params: { id: string } }) {
                     )}
                   </div>
 
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => router.push(`/chat?other=${encodeURIComponent(profile.email)}`)}
-                  >
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Send Message
-                  </Button>
+                  {isMutualMatch && (
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => router.push(`/chat?other=${encodeURIComponent(profile.email)}`)}
+                    >
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Send Message
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>

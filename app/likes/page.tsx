@@ -27,17 +27,20 @@ type LikedProfile = {
     sleepSchedule: string
   }
   views?: number
+  email?: string
 }
 
 export default function LikesPage() {
   const { profile } = useProfile()
   const [likedProfiles, setLikedProfiles] = useState<LikedProfile[]>([])
+  const [mutualMatches, setMutualMatches] = useState<Set<string>>(new Set())
   const [isLoading, setIsLoading] = useState(true)
   const [removingId, setRemovingId] = useState<string | null>(null)
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     fetchLikedProfiles()
+    fetchMutualMatches()
   }, [])
 
   const fetchLikedProfiles = async () => {
@@ -51,6 +54,20 @@ export default function LikesPage() {
       console.error("Failed to fetch liked profiles", err)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const fetchMutualMatches = async () => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/matches/mutual`)
+      const data = await res.json()
+      if (data.success) {
+        // Create a set of mutual match IDs for quick lookup
+        const mutualIds = new Set(data.matches.map((match: any) => match._id))
+        setMutualMatches(mutualIds)
+      }
+    } catch (err) {
+      console.error("Failed to fetch mutual matches", err)
     }
   }
 
@@ -157,6 +174,7 @@ export default function LikesPage() {
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {likedProfiles.map((profile) => {
                 const isFlipped = flippedCards.has(profile._id)
+                const isMutualMatch = mutualMatches.has(profile._id)
                 return (
                   <div key={profile._id} className="relative group perspective">
                     {/* Flip Card Container */}
@@ -275,9 +293,13 @@ export default function LikesPage() {
                                   View Full Profile
                                 </Button>
                               </Link>
-                              <Button variant="outline" size="sm" className="px-3 bg-white/80 backdrop-blur-sm border-slate-200 hover:bg-white hover:border-slate-300 transition-all duration-200" onClick={(e) => e.stopPropagation()}>
-                                <MessageCircle className="h-4 w-4" />
-                              </Button>
+                              {isMutualMatch && (
+                                <Link href={`/chat?other=${encodeURIComponent(profile.email || profile._id)}`} className="flex-1">
+                                  <Button variant="outline" size="sm" className="w-full px-3 bg-white/80 backdrop-blur-sm border-slate-200 hover:bg-white hover:border-slate-300 transition-all duration-200" onClick={(e) => e.stopPropagation()}>
+                                    <MessageCircle className="h-4 w-4" />
+                                  </Button>
+                                </Link>
+                              )}
                             </div>
 
                             {/* Flip Back Hint */}
