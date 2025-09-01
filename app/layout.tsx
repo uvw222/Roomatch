@@ -8,7 +8,9 @@ import LayoutShell from "@/components/layout-shell"
 import CurrentLocationDetector from "@/components/CurrentLocationDetector"
 import { ProfileProvider } from "@/hooks/useProfile"
 import { AuthProvider } from "@/hooks/useAuth"
+import { UnreadMessagesProvider } from "@/hooks/useUnreadMessages"
 import GlobalMatchNotification from "@/components/GlobalMatchNotification"
+import NotificationSound from "@/components/notification-sound"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
@@ -51,10 +53,13 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <ProfileProvider>
-              <ViewportHandler />
-              <CurrentLocationDetector />
-              <LayoutShell>{children}</LayoutShell>
-              <GlobalMatchNotification />
+              <UnreadMessagesProvider>
+                <ViewportHandler />
+                <CurrentLocationDetector />
+                <LayoutShell>{children}</LayoutShell>
+                <GlobalMatchNotification />
+                <NotificationSound />
+              </UnreadMessagesProvider>
             </ProfileProvider>
           </AuthProvider>
         </ThemeProvider>

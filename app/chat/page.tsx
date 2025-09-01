@@ -23,6 +23,7 @@ import {
   ChevronUp
 } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
+import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { getSocketClient } from "@/lib/socketClient";
 
 /* ---------- Types ---------- */
@@ -54,6 +55,7 @@ export default function ChatPage() {
   const searchParams = useSearchParams();
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const { profile } = useProfile();
+  const { refreshUnreadCount } = useUnreadMessages();
   
   const [matchedUsers, setMatchedUsers] = useState<MatchedUser[]>([]);
   const [selectedUser, setSelectedUser] = useState<MatchedUser | null>(null);
@@ -194,8 +196,11 @@ export default function ChatPage() {
             credentials: 'include'
           });
           
-          // Update unread count
+          // Update unread count in matched users list
           updateUnreadCount(userEmail, -unreadIds.length);
+          
+          // Refresh global unread count
+          refreshUnreadCount();
         }
       }
     } catch (error) {

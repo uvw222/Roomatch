@@ -1,42 +1,34 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { MessageCircle, Calendar, User, Home, Heart, TrendingUp, Users, Clock, ArrowRight, Plus, Edit3 } from "lucide-react"
 import Link from "next/link"
-import { redirect } from "next/navigation"
-import { getCollection } from "@/lib/db"
-import { ObjectId } from "mongodb"
-import { getCurrentUser } from "@/lib/auth"
+import { useUnreadMessages } from "@/hooks/useUnreadMessages"
+import { useAuth } from "@/hooks/useAuth"
+import { useProfile } from "@/hooks/useProfile"
 
-export default async function DashboardPage() {
-  const user = await getCurrentUser()
-  
-  if (!user) {
-    redirect("/login")
+export default function DashboardPage() {
+  const { user } = useAuth()
+  const { profile, isLoading: profileLoading } = useProfile()
+  const { unreadCount } = useUnreadMessages()
+
+  if (profileLoading || !profile) {
+    return (
+      <div className="page-content">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+              <p className="text-slate-600">Loading your dashboard...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
-  const profiles = await getCollection("profiles")
-  const profile = await profiles.findOne({ email: user.email })
-  
-  if (!profile) {
-    redirect("/login") // just in case email is stale or user was deleted
-  }
-  const myIdString = profile._id.toString();          // convert my ObjectId to string
-const likedObjectIds = (profile.likedProfiles || [])
-  .map((id: string) => new ObjectId(id));           // convert my likes to ObjectIds
-
-const mutualMatches = await profiles.find({
-  likedProfiles: myIdString,                       // they liked me (stored as string)
-  _id: { $in: likedObjectIds }                     // I liked them (converted to ObjectIds)
-}).toArray();
-
-const matchCount = mutualMatches.length
-const messagesCol = await getCollection("messages")
-const unreadCount = await messagesCol.countDocuments({ to: user.email, read: false })
-
-console.log("Profile ID:", profile._id)
-console.log("Liked profiles:", profile.likedProfiles)
-console.log("Converted liked profiles:", likedObjectIds)
-console.log("Match count:", mutualMatches.length)
+  const matchCount = profile.likedProfiles?.length || 0
   return (
     <div className="page-content">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
@@ -100,7 +92,9 @@ console.log("Match count:", mutualMatches.length)
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold text-slate-800 mb-1">{unreadCount}</div>
-                  <p className="text-xs text-slate-500">unread messages</p>
+                  <p className="text-xs text-slate-500">
+                    {unreadCount === 1 ? 'unread message' : 'unread messages'}
+                  </p>
                 </CardContent>
               </Card>
             </Link>

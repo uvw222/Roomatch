@@ -18,64 +18,24 @@ import { Calendar, Heart, Home, LogOut, Menu, MessageCircle, Settings, User, Edi
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useProfileImage } from "@/hooks/useProfile"
 import { useAuth } from "@/hooks/useAuth"
+import { useUnreadMessages } from "@/hooks/useUnreadMessages"
 import { getSocketClient } from "@/lib/socketClient"
 
 export default function DashboardNav() {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
-  const [hasNewMessages, setHasNewMessages] = useState(false)
   const { profileImage, isLoading, refreshProfileImage } = useProfileImage()
   const { logout, user } = useAuth()
+  const { hasUnreadMessages } = useUnreadMessages()
   const router = useRouter()
 
   const handleLogout = async () => {
     await logout()
   }
 
-  // Check for new messages
-  useEffect(() => {
-    if (!user?.email) return;
-
-    const checkNewMessages = async () => {
-      try {
-        const res = await fetch('/api/chat/matches', {
-          credentials: 'include'
-        });
-        const data = await res.json();
-        
-        if (data.success) {
-          const hasUnread = data.matches.some((user: any) => user.unread > 0);
-          setHasNewMessages(hasUnread);
-        }
-      } catch (error) {
-        console.error('Error checking for new messages:', error);
-      }
-    };
-
-    checkNewMessages();
-
-    // Set up real-time updates using socket
-    const socket = getSocketClient(user.email);
-    if (socket) {
-      const handleNewMessage = (message: any) => {
-        if (message.to === user.email) {
-          setHasNewMessages(true);
-        }
-      };
-
-      socket.on('messages:new', handleNewMessage);
-
-      return () => {
-        socket.off('messages:new', handleNewMessage);
-      };
-    }
-  }, [user?.email]);
-
   // Clear notifications when navigating to chat page
   useEffect(() => {
-    if (pathname === '/chat') {
-      setHasNewMessages(false);
-    }
+    // This effect is now handled by the useUnreadMessages hook
   }, [pathname]);
 
   // Refresh profile image when pathname changes (e.g., when returning from profile edit)
@@ -97,7 +57,7 @@ export default function DashboardNav() {
       icon: (
         <div className="relative">
           <MessageCircle className="h-5 w-5" />
-          {hasNewMessages && (
+          {hasUnreadMessages && (
             <div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></div>
           )}
         </div>
@@ -131,6 +91,15 @@ export default function DashboardNav() {
         </nav>
 
         <div className="flex items-center gap-4">
+          {/* Unread Messages Indicator */}
+          <div className="hidden md:flex items-center gap-2">
+            {hasUnreadMessages && (
+              <div className="flex items-center gap-2 bg-orange-100 text-orange-800 px-3 py-1.5 rounded-full border border-orange-200">
+                <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium">New messages</span>
+              </div>
+            )}
+          </div>
           <ThemeToggle />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -194,8 +163,11 @@ export default function DashboardNav() {
 
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden">
+              <Button variant="ghost" size="icon" className="lg:hidden relative">
                 <Menu className="h-5 w-5" />
+                {hasUnreadMessages && (
+                  <div className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full animate-pulse"></div>
+                )}
               </Button>
             </SheetTrigger>
             <SheetContent side="right">
