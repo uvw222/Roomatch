@@ -30,7 +30,7 @@ export default function ChatWindow({
   }, [messages]);
 
   return (
-    <div className="max-h-[60vh] overflow-y-auto px-2 flex flex-col gap-3">
+    <div className="h-[60vh] overflow-y-auto px-2 flex flex-col gap-3">
       {messages?.map((m: any) => {
         const isOwn = m.from === meEmail;
         return (

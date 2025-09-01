@@ -279,10 +279,10 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-full pt-safe pb-safe bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex-1 flex flex-col">
+    <div className="flex flex-col h-screen pt-safe pb-safe bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex-1 flex flex-col min-h-0">
         {/* Enhanced Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-white/80 backdrop-blur-sm rounded-t-lg">
+        <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-white/80 backdrop-blur-sm rounded-t-lg flex-shrink-0">
           <div className="space-y-1">
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
@@ -303,10 +303,10 @@ export default function ChatPage() {
           </div>
         </div>
 
-        <div className="bg-white/80 backdrop-blur-sm border-0 rounded-b-lg shadow-xl grid grid-cols-1 md:grid-cols-[300px_1fr] flex-1 overflow-hidden">
+        <div className="bg-white/80 backdrop-blur-sm border-0 rounded-b-lg shadow-xl grid grid-cols-1 md:grid-cols-[300px_1fr] flex-1 min-h-0 overflow-hidden">
           {/* -------- Enhanced Matched Users List -------- */}
-          <div className="border-r border-slate-200 bg-white/80 backdrop-blur-sm">
-            <div className="p-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50">
+          <div className="border-r border-slate-200 bg-white/80 backdrop-blur-sm flex flex-col min-h-0">
+            <div className="p-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 flex-shrink-0">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <Input 
@@ -318,7 +318,7 @@ export default function ChatPage() {
               </div>
             </div>
             
-            <ScrollArea className="h-[calc(100vh-240px)] users-list-scroll">
+            <ScrollArea className="flex-1 min-h-0 users-list-scroll">
               <div className="p-2">
                 {matchedUsers.length === 0 ? (
                   <div className="text-center py-8">
@@ -372,9 +372,9 @@ export default function ChatPage() {
 
           {/* -------- Enhanced Conversation -------- */}
           {selectedUser ? (
-            <div className="flex flex-col h-full bg-white/80 backdrop-blur-sm">
-              {/* Enhanced Header */}
-              <div className="p-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 flex items-center justify-between">
+            <div className="flex flex-col h-full bg-white/80 backdrop-blur-sm min-h-0">
+              {/* Row 1: Conversation Header */}
+              <div className="p-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 flex items-center justify-between flex-shrink-0">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={selectedUser.profileImage} alt={selectedUser.name} />
@@ -402,59 +402,61 @@ export default function ChatPage() {
                 </div>
               </div>
 
-              {/* Enhanced Message list */}
-              <ScrollArea className="flex-1 p-4 chat-content-area">
-                <div className="space-y-3">
-                  {messages.length === 0 ? (
-                    <div className="text-center py-8">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <MessageCircle className="h-6 w-6 text-blue-500" />
+              {/* Row 2: Messages Area - Fixed height with scroll */}
+              <div className="flex-1 min-h-0 overflow-hidden">
+                <div className="h-full overflow-y-auto p-4 messages-container">
+                  <div className="space-y-3">
+                    {messages.length === 0 ? (
+                      <div className="text-center py-8">
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <MessageCircle className="h-6 w-6 text-blue-500" />
+                        </div>
+                        <h3 className="text-sm font-semibold text-slate-800 mb-2">Start a conversation</h3>
+                        <p className="text-xs text-slate-600">Send a message to begin chatting with {selectedUser.name}</p>
                       </div>
-                      <h3 className="text-sm font-semibold text-slate-800 mb-2">Start a conversation</h3>
-                      <p className="text-xs text-slate-600">Send a message to begin chatting with {selectedUser.name}</p>
-                    </div>
-                  ) : (
-                    messages.map((message, idx) => {
-                      const isMyMessage = message.from?.toLowerCase() === profile?.email?.toLowerCase();
-                      return (
-                        <div
-                          key={message._id}
-                          className={`flex ${isMyMessage ? "justify-end" : "justify-start"}`}
-                          ref={idx === messages.length - 1 ? bottomRef : null}
-                        >
+                    ) : (
+                      messages.map((message, idx) => {
+                        const isMyMessage = message.from?.toLowerCase() === profile?.email?.toLowerCase();
+                        return (
                           <div
-                            className={`max-w-[75%] rounded-2xl p-3 shadow-sm ${
-                              isMyMessage
-                                ? "bg-gradient-to-r from-orange-500 to-red-500 text-white"
-                                : "bg-white border border-slate-200 text-slate-800"
-                            }`}
+                            key={message._id}
+                            className={`flex ${isMyMessage ? "justify-end" : "justify-start"}`}
+                            ref={idx === messages.length - 1 ? bottomRef : null}
                           >
-                            <p className="leading-relaxed text-sm">{message.text}</p>
-                            <div className={`flex items-center justify-between mt-2 ${
-                              isMyMessage ? "text-orange-100" : "text-slate-500"
-                            }`}>
-                              <span className="text-xs">
-                                {new Date(message.timestamp).toLocaleTimeString([], { 
-                                  hour: '2-digit', 
-                                  minute: '2-digit' 
-                                })}
-                              </span>
-                              {isMyMessage && (
+                            <div
+                              className={`max-w-[75%] rounded-2xl p-3 shadow-sm ${
+                                isMyMessage
+                                  ? "bg-gradient-to-r from-orange-500 to-red-500 text-white"
+                                  : "bg-white border border-slate-200 text-slate-800"
+                              }`}
+                            >
+                              <p className="leading-relaxed text-sm">{message.text}</p>
+                              <div className={`flex items-center justify-between mt-2 ${
+                                isMyMessage ? "text-orange-100" : "text-slate-500"
+                              }`}>
                                 <span className="text-xs">
-                                  {message.read ? "✓✓" : "✓"}
+                                  {new Date(message.timestamp).toLocaleTimeString([], { 
+                                    hour: '2-digit', 
+                                    minute: '2-digit' 
+                                  })}
                                 </span>
-                              )}
+                                {isMyMessage && (
+                                  <span className="text-xs">
+                                    {message.read ? "✓✓" : "✓"}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })
-                  )}
+                        );
+                      })
+                    )}
+                  </div>
                 </div>
-              </ScrollArea>
+              </div>
 
-              {/* Enhanced Compose box */}
-              <div className="p-3 border-t border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50">
+              {/* Row 3: Compose box */}
+              <div className="p-3 border-t border-slate-200 bg-gradient-to-r from-slate-50 to-blue-50 flex-shrink-0">
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
