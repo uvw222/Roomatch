@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, User } from "lucide-react";
 import InitSocket from "@/components/InitSocket"; // ✅ ADDED
+import ChatComposer from "@/components/ChatComposer";
 
 
 /* ---------- Types ---------- */
@@ -211,22 +212,7 @@ useEffect(() => {
 
               {/* Compose box */}
               <div className="p-3 border-t">
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }}
-                  className="flex gap-2"
-                >
-                  <Input
-                    value={newMessage}
-                    placeholder="Type a message…"
-                    onChange={(e) => setNewMessage(e.target.value)}
-                  />
-                  <Button className="bg-orange-600 hover:bg-orange-700" type="submit">
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </form>
+                <ChatComposer meEmail={myEmail} otherEmail={selectedContact.email} />
               </div>
             </div>
           ) : (

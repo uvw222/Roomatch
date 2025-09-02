@@ -1,9 +1,11 @@
-// components/ChatComposer.tsx
 import { useState } from "react";
+import { getSocketClient } from "@/lib/socketClient";
 
 export default function ChatComposer({
+  meEmail,
   otherEmail,
 }: {
+  meEmail: string;
   otherEmail: string;
 }) {
   const [text, setText] = useState("");
@@ -11,12 +13,15 @@ export default function ChatComposer({
   const handleSend = async () => {
     if (!text.trim()) return;
 
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages/send`, {
-      method: "POST",
-      body: JSON.stringify({ to: otherEmail, text }),
+    const socket = getSocketClient(meEmail);
+    socket.emit("send", {
+      from: meEmail,
+      to: otherEmail,
+      text,
+      timestamp: new Date().toISOString(),
     });
 
-    setText(""); // socket will refresh list
+    setText("");
   };
 
   return (

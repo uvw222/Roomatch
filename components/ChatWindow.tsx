@@ -1,7 +1,8 @@
 "use client";
 
 import { useConversation } from "@/hooks/useConversation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { getSocketClient } from "@/lib/socketClient";
 
 export default function ChatWindow({
   meEmail,
@@ -10,10 +11,29 @@ export default function ChatWindow({
   meEmail: string;
   otherEmail: string;
 }) {
-  const { messages, mutate } = useConversation(meEmail, otherEmail);
+  const { messages: initialMessages, mutate } = useConversation(meEmail, otherEmail);
+  const [messages, setMessages] = useState(initialMessages || []);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
-  // Mark partner messages as read
+  // ✅ Live update messages via socket
+  useEffect(() => {
+    const socket = getSocketClient(meEmail);
+
+    socket.on("message", (msg: any) => {
+      if (
+        (msg.from === otherEmail && msg.to === meEmail) || // incoming
+        (msg.from === meEmail && msg.to === otherEmail)    // just sent
+      ) {
+        setMessages((prev) => [...prev, msg]);
+      }
+    });
+
+    return () => {
+      socket.off("message");
+    };
+  }, [meEmail, otherEmail]);
+
+  // ✅ Mark partner messages as read
   useEffect(() => {
     if (messages?.some((m: any) => m.to === meEmail && !m.read)) {
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/messages/mark-read`, {
@@ -24,7 +44,7 @@ export default function ChatWindow({
     }
   }, [messages, meEmail, otherEmail, mutate]);
 
-  // Scroll to bottom when new messages arrive
+  // ✅ Scroll to bottom on new message
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
