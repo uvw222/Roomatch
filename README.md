@@ -8,60 +8,14 @@ rommatch product idea: https://docs.google.com/document/d/1ggGqMwrGXvvEENVtSDokt
 
 ## Testing
 
-This project uses Vitest and React Testing Library with a jsdom environment.
+This project uses Vitest + React Testing Library (jsdom).
 
-- Install deps: pnpm install
-- Run tests once: pnpm test
-- Watch mode (optional): pnpm vitest
+Commands
+- Install: pnpm install
+- Run all tests: pnpm test
+- Watch mode: pnpm vitest
 
-Notes:
-- The test runner is configured in itest.config.ts with @vitejs/plugin-react, environment: "jsdom", and an alias of @ to the repo root.
-- itest.setup.ts includes jest-dom matchers and a small scrollIntoView polyfill for jsdom.
+Notes
+- Config: vitest.config.ts uses @vitejs/plugin-react, environment: "jsdom", and alias "@" to the repo root.
+- Setup: vitest.setup.ts loads @testing-library/jest-dom and polyfills scrollIntoView.
 - Integration tests mock Next.js navigation, custom hooks, sockets, and network calls.
-
-If you see JSX/React transform issues in tests, ensure @vitejs/plugin-react is installed and enabled in itest.config.ts.
-
-## Testing
-
-This project uses Vitest and React Testing Library with a jsdom environment.
-
-- Install deps: pnpm install
-- Run tests once: pnpm test
-- Watch mode (optional): pnpm vitest
-
-Notes:
-- The test runner is configured in `vitest.config.ts` with `@vitejs/plugin-react`, `environment: "jsdom"`, and an alias of `@` to the repo root.
-- `vitest.setup.ts` includes jest-dom matchers and a small `scrollIntoView` polyfill for jsdom.
-- Integration tests mock Next.js navigation, custom hooks, sockets, and network calls.
-
-If you see JSX/React transform issues in tests, ensure `@vitejs/plugin-react` is installed and enabled in `vitest.config.ts`.
-
-
-## Testing
-
-This project uses Vitest and React Testing Library with a jsdom environment.
-
-- Install deps: pnpm install
-- Run tests once: pnpm test
-- Watch mode (optional): pnpm vitest
-
-Notes:
-- The test runner is configured in itest.config.ts with @vitejs/plugin-react, environment: jsdom, and an alias of @ to the repo root.
-- itest.setup.ts includes jest-dom matchers and a small scrollIntoView polyfill for jsdom.
-- Integration tests mock Next.js navigation, custom hooks, sockets, and network calls.
-
-If you see JSX/React transform issues in tests, ensure @vitejs/plugin-react is installed and enabled in vitest.config.ts.
-
-
-## Testing
-
-This project uses Vitest and React Testing Library with a jsdom environment.
-
-- Install deps: pnpm install
-- Run tests once: pnpm test
-- Watch mode (optional): pnpm vitest
-
-Notes:
-- Config: `vitest.config.ts` uses `@vitejs/plugin-react`, jsdom, and alias `@` to the repo root.
-- Setup: `vitest.setup.ts` loads jest-dom and polyfills `scrollIntoView` for jsdom.
-- Integration tests mock Next.js navigation, custom hooks, sockets, and fetch calls.
