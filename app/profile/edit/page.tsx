@@ -453,9 +453,11 @@ export default function EditProfilePage() {
           </div>
         )}
 
-        <div className="grid gap-8 lg:grid-cols-3">
-          {/* Profile Image Section - Smaller on web */}
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl lg:col-span-1">
+        <div className="flex flex-col gap-8">
+          {/* First Row: Profile Image + Basic Info (50/50) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Profile Image Section - 50% width on web */}
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
             <CardHeader className="pb-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-gradient-to-br from-orange-100 to-red-100 rounded-lg">
@@ -512,72 +514,74 @@ export default function EditProfilePage() {
             </CardContent>
           </Card>
 
-          {/* Form Fields */}
-          <div className="space-y-6 lg:col-span-2">
-            {/* Basic Information Card */}
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg">
-                    <User className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-xl font-bold text-slate-800">Basic Information</CardTitle>
-                    <CardDescription className="text-slate-600">Your personal details</CardDescription>
-                  </div>
+          {/* Basic Information Section - 50% width on web */}
+          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg">
+                  <User className="h-5 w-5 text-blue-600" />
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="name" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    Full Name *
-                  </Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    value={profile.name}
-                    onChange={handleChange}
-                    placeholder="Enter your full name"
-                    className={`mt-2 h-12 border-slate-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200 ${errors.name ? "border-red-500" : ""}`}
-                  />
-                  {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+                  <CardTitle className="text-xl font-bold text-slate-800">Basic Information</CardTitle>
+                  <CardDescription className="text-slate-600">Your personal details</CardDescription>
                 </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="name" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  Full Name *
+                </Label>
+                <Input
+                  id="name"
+                  name="name"
+                  value={profile.name}
+                  onChange={handleChange}
+                  placeholder="Enter your full name"
+                  className={`mt-2 h-12 border-slate-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200 ${errors.name ? "border-red-500" : ""}`}
+                />
+                {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+              </div>
 
-                <div>
-                  <Label htmlFor="age" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    Age *
-                  </Label>
-                  <Input
-                    id="age"
-                    name="age"
-                    type="number"
-                    value={profile.age}
-                    onChange={handleChange}
-                    placeholder="Enter your age"
-                    className={`mt-2 h-12 border-slate-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200 ${errors.age ? "border-red-500" : ""}`}
-                  />
-                  {errors.age && <p className="text-red-500 text-sm mt-1">{errors.age}</p>}
-                </div>
+              <div>
+                <Label htmlFor="age" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Age *
+                </Label>
+                <Input
+                  id="age"
+                  name="age"
+                  type="number"
+                  value={profile.age}
+                  onChange={handleChange}
+                  placeholder="Enter your age"
+                  className={`mt-2 h-12 border-slate-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200 ${errors.age ? "border-red-500" : ""}`}
+                />
+                {errors.age && <p className="text-red-500 text-sm mt-1">{errors.age}</p>}
+              </div>
 
-                <div>
-                  <Label htmlFor="occupation" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                    <Briefcase className="h-4 w-4" />
-                    Occupation *
-                  </Label>
-                  <Input
-                    id="occupation"
-                    name="occupation"
-                    value={profile.occupation}
-                    onChange={handleChange}
-                    placeholder="Enter your occupation"
-                    className={`mt-2 h-12 border-slate-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200 ${errors.occupation ? "border-red-500" : ""}`}
-                  />
-                  {errors.occupation && <p className="text-red-500 text-sm mt-1">{errors.occupation}</p>}
-                </div>
-              </CardContent>
-            </Card>
+              <div>
+                <Label htmlFor="occupation" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                  <Briefcase className="h-4 w-4" />
+                  Occupation *
+                </Label>
+                <Input
+                  id="occupation"
+                  name="occupation"
+                  value={profile.occupation}
+                  onChange={handleChange}
+                  placeholder="Enter your occupation"
+                  className={`mt-2 h-12 border-slate-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200 ${errors.occupation ? "border-red-500" : ""}`}
+                />
+                {errors.occupation && <p className="text-red-500 text-sm mt-1">{errors.occupation}</p>}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Remaining Form Fields */}
+        <div className="space-y-6">
 
             {/* Location Card */}
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
