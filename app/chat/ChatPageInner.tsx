@@ -79,28 +79,41 @@ export default function ChatPageInner() {
       setSocket(socketClient);
 
       const handleNewMessage = (message: Message) => {
-        if (
+        const isForThisThread =
           (message.from === selectedUser?.email && message.to === profile.email) ||
-          (message.from === profile.email && message.to === selectedUser?.email)
-        ) {
-          setMessages((prev) => [...prev, message]);
+          (message.from === profile.email && message.to === selectedUser?.email);
+
+        if (isForThisThread) {
+          setMessages((prev) => {
+            if (prev.some((m) => m._id === message._id)) return prev;
+            return [...prev, message];
+          });
+        }
+
+        // Unread only increases on inbound messages to me
+        if (message.to === profile.email) {
           updateUnreadCount(message.from, 1);
         }
+
+        // Update sidebar last message/time for the other participant
+        setMatchedUsers((prev) => {
+          const otherEmail = message.from === profile.email ? message.to : message.from;
+          const updated = prev.map((user) =>
+            user.email === otherEmail
+              ? {
+                  ...user,
+                  lastMessage: message.text,
+                  lastTime: new Date(message.timestamp),
+                  time: new Date(message.timestamp).toLocaleString(),
+                }
+              : user
+          );
+          return sortUsersByLastMessage(updated);
+        });
+
+        // Badge indicator when new inbound arrives for non-selected thread
         if (message.to === profile.email && message.from !== selectedUser?.email) {
           setHasNewMessages(true);
-          setMatchedUsers((prev) => {
-            const updated = prev.map((user) =>
-              user.email === message.from
-                ? {
-                    ...user,
-                    lastMessage: message.text,
-                    lastTime: new Date(message.timestamp),
-                    time: new Date(message.timestamp).toLocaleString(),
-                  }
-                : user
-            );
-            return sortUsersByLastMessage(updated);
-          });
         }
       };
 
@@ -207,30 +220,10 @@ export default function ChatPageInner() {
         credentials: "include",
       });
       if (res.ok) {
-        const newMsg: Message = {
-          _id: Date.now().toString(),
-          from: profile.email,
-          to: selectedUser.email,
-          text: newMessage.trim(),
-          timestamp: new Date().toISOString(),
-          read: false,
-        };
-        setMessages((prev) => [...prev, newMsg]);
+        // Clear input; rely on socket "messages:new" to render the sent message
         setNewMessage("");
-        setMatchedUsers((prev) =>
-          sortUsersByLastMessage(
-            prev.map((u) =>
-              u.email === selectedUser.email
-                ? {
-                    ...u,
-                    lastMessage: newMessage.trim(),
-                    lastTime: new Date(),
-                    time: new Date().toLocaleString(),
-                  }
-                : u
-            )
-          )
-        );
+        // Fallback: refresh thread shortly in case socket echo is delayed
+        fetchMessages(selectedUser.email);
       }
     } catch (e) {
       console.error("Error sending message:", e);
