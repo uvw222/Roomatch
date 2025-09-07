@@ -36,6 +36,54 @@ interface Profile {
   hasPets?: boolean
   isSmoker?: boolean
   createdAt?: Date
+  // Renter-specific fields
+  renterInfo?: {
+    currentLivingSituation?: string
+    reasonForMoving?: string
+    employmentStatus?: string
+    monthlyIncome?: number
+    hasGuarantor?: boolean
+    guarantorInfo?: string
+    moveInTimeframe?: string
+    leaseDuration?: string
+    housingPreferences?: {
+      roomType?: string
+      bathroomType?: string
+      furnished?: string
+      utilities?: string[]
+      amenities?: string[]
+      accessibility?: string[]
+    }
+  }
+  // Landlord-specific fields
+  landlordInfo?: {
+    propertyType?: string
+    propertySize?: string
+    availableRooms?: number
+    totalRooms?: number
+    monthlyRent?: number
+    securityDeposit?: number
+    utilitiesIncluded?: string[]
+    furnished?: string
+    leaseDuration?: string
+    availableFrom?: string
+    propertyAmenities?: string[]
+    houseRules?: {
+      smokingAllowed?: boolean
+      petsAllowed?: boolean
+      guestsAllowed?: boolean
+      partiesAllowed?: boolean
+      quietHours?: string
+    }
+    tenantPreferences?: {
+      preferredAge?: string
+      preferredGender?: string
+      preferredOccupation?: string
+      backgroundCheckRequired?: boolean
+      creditCheckRequired?: boolean
+      referencesRequired?: boolean
+    }
+  }
 }
 
 interface ProfileContextType {

@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Crop, Upload, X, User, Save, ArrowLeft, Camera, MapPin, Briefcase, Calendar, FileText } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Crop, Upload, X, User, Save, ArrowLeft, Camera, MapPin, Briefcase, Calendar, FileText, Home, DollarSign, Clock, Shield, Settings } from "lucide-react"
 import LocationPicker from "@/components/LocationPicker"
 import ImageCropper from "@/components/ImageCropper"
 import { useProfile } from "../../../hooks/useProfile"
@@ -24,6 +26,56 @@ type Profile = {
   }
   bio: string
   profileImage?: string
+  userType?: string
+  budget?: number
+  // Renter-specific fields
+  renterInfo?: {
+    currentLivingSituation?: string
+    reasonForMoving?: string
+    employmentStatus?: string
+    monthlyIncome?: number
+    hasGuarantor?: boolean
+    guarantorInfo?: string
+    moveInTimeframe?: string
+    leaseDuration?: string
+    housingPreferences?: {
+      roomType?: string
+      bathroomType?: string
+      furnished?: string
+      utilities?: string[]
+      amenities?: string[]
+      accessibility?: string[]
+    }
+  }
+  // Landlord-specific fields
+  landlordInfo?: {
+    propertyType?: string
+    propertySize?: string
+    availableRooms?: number
+    totalRooms?: number
+    monthlyRent?: number
+    securityDeposit?: number
+    utilitiesIncluded?: string[]
+    furnished?: string
+    leaseDuration?: string
+    availableFrom?: string
+    propertyAmenities?: string[]
+    houseRules?: {
+      smokingAllowed?: boolean
+      petsAllowed?: boolean
+      guestsAllowed?: boolean
+      partiesAllowed?: boolean
+      quietHours?: string
+    }
+    tenantPreferences?: {
+      preferredAge?: string
+      preferredGender?: string
+      preferredOccupation?: string
+      backgroundCheckRequired?: boolean
+      creditCheckRequired?: boolean
+      referencesRequired?: boolean
+    }
+  }
 }
 
 export default function EditProfilePage() {
@@ -36,6 +88,54 @@ export default function EditProfilePage() {
     coordinates: undefined,
     bio: "",
     profileImage: "",
+    userType: "",
+    budget: 0,
+    renterInfo: {
+      currentLivingSituation: "",
+      reasonForMoving: "",
+      employmentStatus: "",
+      monthlyIncome: 0,
+      hasGuarantor: false,
+      guarantorInfo: "",
+      moveInTimeframe: "",
+      leaseDuration: "",
+      housingPreferences: {
+        roomType: "",
+        bathroomType: "",
+        furnished: "",
+        utilities: [],
+        amenities: [],
+        accessibility: []
+      }
+    },
+    landlordInfo: {
+      propertyType: "",
+      propertySize: "",
+      availableRooms: 0,
+      totalRooms: 0,
+      monthlyRent: 0,
+      securityDeposit: 0,
+      utilitiesIncluded: [],
+      furnished: "",
+      leaseDuration: "",
+      availableFrom: "",
+      propertyAmenities: [],
+      houseRules: {
+        smokingAllowed: false,
+        petsAllowed: false,
+        guestsAllowed: true,
+        partiesAllowed: false,
+        quietHours: ""
+      },
+      tenantPreferences: {
+        preferredAge: "",
+        preferredGender: "",
+        preferredOccupation: "",
+        backgroundCheckRequired: false,
+        creditCheckRequired: false,
+        referencesRequired: false
+      }
+    }
   })
   const [isNewUser, setIsNewUser] = useState(false)
 
@@ -60,6 +160,54 @@ export default function EditProfilePage() {
           coordinates: globalProfile.coordinates,
           bio: globalProfile.bio ?? "",
           profileImage: globalProfile.profileImage ?? "",
+          userType: globalProfile.userType ?? "",
+          budget: globalProfile.budget ?? 0,
+          renterInfo: globalProfile.renterInfo || {
+            currentLivingSituation: "",
+            reasonForMoving: "",
+            employmentStatus: "",
+            monthlyIncome: 0,
+            hasGuarantor: false,
+            guarantorInfo: "",
+            moveInTimeframe: "",
+            leaseDuration: "",
+            housingPreferences: {
+              roomType: "",
+              bathroomType: "",
+              furnished: "",
+              utilities: [],
+              amenities: [],
+              accessibility: []
+            }
+          },
+          landlordInfo: globalProfile.landlordInfo || {
+            propertyType: "",
+            propertySize: "",
+            availableRooms: 0,
+            totalRooms: 0,
+            monthlyRent: 0,
+            securityDeposit: 0,
+            utilitiesIncluded: [],
+            furnished: "",
+            leaseDuration: "",
+            availableFrom: "",
+            propertyAmenities: [],
+            houseRules: {
+              smokingAllowed: false,
+              petsAllowed: false,
+              guestsAllowed: true,
+              partiesAllowed: false,
+              quietHours: ""
+            },
+            tenantPreferences: {
+              preferredAge: "",
+              preferredGender: "",
+              preferredOccupation: "",
+              backgroundCheckRequired: false,
+              creditCheckRequired: false,
+              referencesRequired: false
+            }
+          }
         })
         
         // If existing user doesn't have location, add current location
@@ -507,8 +655,378 @@ export default function EditProfilePage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Budget Card */}
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-br from-green-100 to-emerald-100 rounded-lg">
+                    <DollarSign className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl font-bold text-slate-800">Budget</CardTitle>
+                    <CardDescription className="text-slate-600">
+                      {profile.userType === 'renter' ? 'Your monthly budget for housing' : 'Your monthly rent price'}
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div>
+                  <Label htmlFor="budget" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                    <DollarSign className="h-4 w-4" />
+                    {profile.userType === 'renter' ? 'Monthly Budget *' : 'Monthly Rent *'}
+                  </Label>
+                  <Input
+                    id="budget"
+                    name="budget"
+                    type="number"
+                    value={profile.budget}
+                    onChange={handleChange}
+                    placeholder={profile.userType === 'renter' ? 'Enter your monthly budget' : 'Enter monthly rent price'}
+                    className={`mt-2 h-12 border-slate-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200 ${errors.budget ? "border-red-500" : ""}`}
+                  />
+                  {errors.budget && <p className="text-red-500 text-sm mt-1">{errors.budget}</p>}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
+
+        {/* Renter-Specific Fields */}
+        {profile.userType === 'renter' && (
+          <div className="grid gap-6 lg:grid-cols-2 mt-8">
+            {/* Current Situation Card */}
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg">
+                    <Home className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl font-bold text-slate-800">Current Situation</CardTitle>
+                    <CardDescription className="text-slate-600">Your current living situation</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label className="text-sm font-semibold text-slate-700">Current Living Situation</Label>
+                  <Select value={profile.renterInfo?.currentLivingSituation} onValueChange={(value: string) => 
+                    setProfile(prev => ({...prev, renterInfo: {...prev.renterInfo, currentLivingSituation: value}}))
+                  }>
+                    <SelectTrigger className="mt-2 h-12">
+                      <SelectValue placeholder="Select your current situation" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="living_with_parents">Living with Parents</SelectItem>
+                      <SelectItem value="shared_apartment">Shared Apartment</SelectItem>
+                      <SelectItem value="own_apartment">Own Apartment</SelectItem>
+                      <SelectItem value="dorm">Dorm/Student Housing</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-semibold text-slate-700">Employment Status</Label>
+                  <Select value={profile.renterInfo?.employmentStatus} onValueChange={(value: string) => 
+                    setProfile(prev => ({...prev, renterInfo: {...prev.renterInfo, employmentStatus: value}}))
+                  }>
+                    <SelectTrigger className="mt-2 h-12">
+                      <SelectValue placeholder="Select employment status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="full_time">Full-time Employee</SelectItem>
+                      <SelectItem value="part_time">Part-time Employee</SelectItem>
+                      <SelectItem value="student">Student</SelectItem>
+                      <SelectItem value="freelance">Freelancer</SelectItem>
+                      <SelectItem value="unemployed">Unemployed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="monthlyIncome" className="text-sm font-semibold text-slate-700">Monthly Income</Label>
+                  <Input
+                    id="monthlyIncome"
+                    type="number"
+                    value={profile.renterInfo?.monthlyIncome || ''}
+                    onChange={(e) => setProfile(prev => ({
+                      ...prev, 
+                      renterInfo: {...prev.renterInfo, monthlyIncome: parseInt(e.target.value) || 0}
+                    }))}
+                    placeholder="Enter your monthly income"
+                    className="mt-2 h-12 border-slate-200 focus:border-orange-500 focus:ring-orange-500"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Moving Plans Card */}
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-br from-orange-100 to-red-100 rounded-lg">
+                    <Clock className="h-5 w-5 text-orange-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl font-bold text-slate-800">Moving Plans</CardTitle>
+                    <CardDescription className="text-slate-600">When and why you're moving</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label className="text-sm font-semibold text-slate-700">Move-in Timeframe</Label>
+                  <Select value={profile.renterInfo?.moveInTimeframe} onValueChange={(value: string) => 
+                    setProfile(prev => ({...prev, renterInfo: {...prev.renterInfo, moveInTimeframe: value}}))
+                  }>
+                    <SelectTrigger className="mt-2 h-12">
+                      <SelectValue placeholder="When do you want to move?" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="immediately">Immediately</SelectItem>
+                      <SelectItem value="within_month">Within a month</SelectItem>
+                      <SelectItem value="1-3_months">1-3 months</SelectItem>
+                      <SelectItem value="3-6_months">3-6 months</SelectItem>
+                      <SelectItem value="flexible">Flexible</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-semibold text-slate-700">Preferred Lease Duration</Label>
+                  <Select value={profile.renterInfo?.leaseDuration} onValueChange={(value: string) => 
+                    setProfile(prev => ({...prev, renterInfo: {...prev.renterInfo, leaseDuration: value}}))
+                  }>
+                    <SelectTrigger className="mt-2 h-12">
+                      <SelectValue placeholder="How long do you want to stay?" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="short_term">Short-term (1-6 months)</SelectItem>
+                      <SelectItem value="6_months">6 months</SelectItem>
+                      <SelectItem value="1_year">1 year</SelectItem>
+                      <SelectItem value="long_term">Long-term (1+ years)</SelectItem>
+                      <SelectItem value="flexible">Flexible</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="reasonForMoving" className="text-sm font-semibold text-slate-700">Reason for Moving</Label>
+                  <Textarea
+                    id="reasonForMoving"
+                    value={profile.renterInfo?.reasonForMoving || ''}
+                    onChange={(e) => setProfile(prev => ({
+                      ...prev, 
+                      renterInfo: {...prev.renterInfo, reasonForMoving: e.target.value}
+                    }))}
+                    placeholder="Why are you looking to move?"
+                    rows={3}
+                    className="mt-2 border-slate-200 focus:border-orange-500 focus:ring-orange-500"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Landlord-Specific Fields */}
+        {profile.userType === 'landlord' && (
+          <div className="grid gap-6 lg:grid-cols-2 mt-8">
+            {/* Property Details Card */}
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-br from-green-100 to-emerald-100 rounded-lg">
+                    <Home className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl font-bold text-slate-800">Property Details</CardTitle>
+                    <CardDescription className="text-slate-600">Information about your property</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label className="text-sm font-semibold text-slate-700">Property Type</Label>
+                  <Select value={profile.landlordInfo?.propertyType} onValueChange={(value: string) => 
+                    setProfile(prev => ({...prev, landlordInfo: {...prev.landlordInfo, propertyType: value}}))
+                  }>
+                    <SelectTrigger className="mt-2 h-12">
+                      <SelectValue placeholder="Select property type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="apartment">Apartment</SelectItem>
+                      <SelectItem value="house">House</SelectItem>
+                      <SelectItem value="condo">Condo</SelectItem>
+                      <SelectItem value="townhouse">Townhouse</SelectItem>
+                      <SelectItem value="room_in_house">Room in House</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="availableRooms" className="text-sm font-semibold text-slate-700">Available Rooms</Label>
+                    <Input
+                      id="availableRooms"
+                      type="number"
+                      value={profile.landlordInfo?.availableRooms || ''}
+                      onChange={(e) => setProfile(prev => ({
+                        ...prev, 
+                        landlordInfo: {...prev.landlordInfo, availableRooms: parseInt(e.target.value) || 0}
+                      }))}
+                      placeholder="0"
+                      className="mt-2 h-12 border-slate-200 focus:border-orange-500 focus:ring-orange-500"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="totalRooms" className="text-sm font-semibold text-slate-700">Total Rooms</Label>
+                    <Input
+                      id="totalRooms"
+                      type="number"
+                      value={profile.landlordInfo?.totalRooms || ''}
+                      onChange={(e) => setProfile(prev => ({
+                        ...prev, 
+                        landlordInfo: {...prev.landlordInfo, totalRooms: parseInt(e.target.value) || 0}
+                      }))}
+                      placeholder="0"
+                      className="mt-2 h-12 border-slate-200 focus:border-orange-500 focus:ring-orange-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="securityDeposit" className="text-sm font-semibold text-slate-700">Security Deposit</Label>
+                  <Input
+                    id="securityDeposit"
+                    type="number"
+                    value={profile.landlordInfo?.securityDeposit || ''}
+                    onChange={(e) => setProfile(prev => ({
+                      ...prev, 
+                      landlordInfo: {...prev.landlordInfo, securityDeposit: parseInt(e.target.value) || 0}
+                    }))}
+                    placeholder="Enter security deposit amount"
+                    className="mt-2 h-12 border-slate-200 focus:border-orange-500 focus:ring-orange-500"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Tenant Preferences Card */}
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg">
+                    <Settings className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl font-bold text-slate-800">Tenant Preferences</CardTitle>
+                    <CardDescription className="text-slate-600">What you're looking for in tenants</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label className="text-sm font-semibold text-slate-700">Preferred Age Range</Label>
+                  <Select value={profile.landlordInfo?.tenantPreferences?.preferredAge} onValueChange={(value: string) => 
+                    setProfile(prev => ({
+                      ...prev, 
+                      landlordInfo: {
+                        ...prev.landlordInfo, 
+                        tenantPreferences: {...prev.landlordInfo?.tenantPreferences, preferredAge: value}
+                      }
+                    }))
+                  }>
+                    <SelectTrigger className="mt-2 h-12">
+                      <SelectValue placeholder="Select preferred age range" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="18-25">18-25</SelectItem>
+                      <SelectItem value="26-35">26-35</SelectItem>
+                      <SelectItem value="36-45">36-45</SelectItem>
+                      <SelectItem value="45+">45+</SelectItem>
+                      <SelectItem value="no_preference">No Preference</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-semibold text-slate-700">Preferred Gender</Label>
+                  <Select value={profile.landlordInfo?.tenantPreferences?.preferredGender} onValueChange={(value: string) => 
+                    setProfile(prev => ({
+                      ...prev, 
+                      landlordInfo: {
+                        ...prev.landlordInfo, 
+                        tenantPreferences: {...prev.landlordInfo?.tenantPreferences, preferredGender: value}
+                      }
+                    }))
+                  }>
+                    <SelectTrigger className="mt-2 h-12">
+                      <SelectValue placeholder="Select preferred gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="no_preference">No Preference</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold text-slate-700">Requirements</Label>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="backgroundCheck"
+                        checked={profile.landlordInfo?.tenantPreferences?.backgroundCheckRequired}
+                        onCheckedChange={(checked: boolean) => setProfile(prev => ({
+                          ...prev, 
+                          landlordInfo: {
+                            ...prev.landlordInfo, 
+                            tenantPreferences: {...prev.landlordInfo?.tenantPreferences, backgroundCheckRequired: !!checked}
+                          }
+                        }))}
+                      />
+                      <Label htmlFor="backgroundCheck" className="text-sm">Background Check Required</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="creditCheck"
+                        checked={profile.landlordInfo?.tenantPreferences?.creditCheckRequired}
+                        onCheckedChange={(checked: boolean) => setProfile(prev => ({
+                          ...prev, 
+                          landlordInfo: {
+                            ...prev.landlordInfo, 
+                            tenantPreferences: {...prev.landlordInfo?.tenantPreferences, creditCheckRequired: !!checked}
+                          }
+                        }))}
+                      />
+                      <Label htmlFor="creditCheck" className="text-sm">Credit Check Required</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="references"
+                        checked={profile.landlordInfo?.tenantPreferences?.referencesRequired}
+                        onCheckedChange={(checked: boolean) => setProfile(prev => ({
+                          ...prev, 
+                          landlordInfo: {
+                            ...prev.landlordInfo, 
+                            tenantPreferences: {...prev.landlordInfo?.tenantPreferences, referencesRequired: !!checked}
+                          }
+                        }))}
+                      />
+                      <Label htmlFor="references" className="text-sm">References Required</Label>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Save Button */}
         <div className="flex justify-center mt-8">
