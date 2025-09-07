@@ -1,0 +1,24 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- House base -->
+  <rect x="12" y="28" width="40" height="30" fill="#ea580c" rx="2"/>
+  
+  <!-- Roof -->
+  <path d="M8 32L32 8L56 32H52L32 16L12 32H8Z" fill="#dc2626"/>
+  
+  <!-- Door -->
+  <rect x="26" y="42" width="12" height="16" fill="#7c2d12" rx="1"/>
+  <circle cx="35" cy="50" r="1" fill="#fed7aa"/>
+  
+  <!-- Windows -->
+  <rect x="16" y="34" width="8" height="8" fill="#fed7aa" rx="1"/>
+  <rect x="40" y="34" width="8" height="8" fill="#fed7aa" rx="1"/>
+  
+  <!-- Window frames -->
+  <line x1="20" y1="34" x2="20" y2="42" stroke="#ea580c" stroke-width="1"/>
+  <line x1="16" y1="38" x2="24" y2="38" stroke="#ea580c" stroke-width="1"/>
+  <line x1="44" y1="34" x2="44" y2="42" stroke="#ea580c" stroke-width="1"/>
+  <line x1="40" y1="38" x2="48" y2="38" stroke="#ea580c" stroke-width="1"/>
+  
+  <!-- Chimney -->
+  <rect x="42" y="18" width="6" height="12" fill="#7c2d12"/>
+</svg>
