@@ -103,7 +103,13 @@ export default function GlobalMatchNotification() {
   }
 
   const handleViewProfile = (email: string) => {
-    router.push(`/profile/${email}`)
+    // Find the name from matchData to use for profile navigation
+    if (matchData?.name) {
+      router.push(`/profile/${encodeURIComponent(matchData.name)}`)
+    } else {
+      // Fallback to email if name is not available
+      router.push(`/profile/${email}`)
+    }
     handleClose()
   }
 

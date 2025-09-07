@@ -86,9 +86,9 @@ export default function MatchesPage() {
            match.location?.toLowerCase().includes(searchTerm.toLowerCase())
   })
 
-  const handleViewProfile = (email: string) => {
-    // Navigate to profile page
-    router.push(`/profile/${email}`)
+  const handleViewProfile = (name: string) => {
+    // Navigate to profile page using username
+    router.push(`/profile/${encodeURIComponent(name)}`)
   }
 
   const handleStartChat = (email: string) => {
@@ -286,7 +286,7 @@ export default function MatchesPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleViewProfile(match.email)}
+                      onClick={() => handleViewProfile(match.name)}
                       className="flex-1 border-slate-200 hover:bg-slate-50 hover:border-slate-300"
                     >
                       <User className="h-3 w-3 mr-1" />

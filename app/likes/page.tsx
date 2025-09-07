@@ -287,7 +287,7 @@ export default function LikesPage() {
 
                             {/* Action Buttons */}
                             <div className="flex gap-2 mt-auto">
-                              <Link href={`/profile/${profile._id}`} className="flex-1">
+                              <Link href={`/profile/${encodeURIComponent(profile.name)}`} className="flex-1">
                                 <Button variant="outline" className="w-full bg-white/80 backdrop-blur-sm border-slate-200 hover:bg-white hover:border-slate-300 transition-all duration-200" onClick={(e) => e.stopPropagation()}>
                                   <Users className="h-4 w-4 mr-2" />
                                   View Full Profile
