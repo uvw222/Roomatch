@@ -8,16 +8,16 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  Send, 
-  User, 
-  Search, 
+import {
+  Send,
+  User,
+  Search,
   Heart,
   MessageCircle,
   Users,
   Bell,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
 } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
@@ -51,7 +51,7 @@ export default function ChatPageInner() {
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const { profile } = useProfile();
   const { refreshUnreadCount } = useUnreadMessages();
-  
+
   const [matchedUsers, setMatchedUsers] = useState<MatchedUser[]>([]);
   const [selectedUser, setSelectedUser] = useState<MatchedUser | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -83,15 +83,20 @@ export default function ChatPageInner() {
           (message.from === selectedUser?.email && message.to === profile.email) ||
           (message.from === profile.email && message.to === selectedUser?.email)
         ) {
-          setMessages(prev => [...prev, message]);
+          setMessages((prev) => [...prev, message]);
           updateUnreadCount(message.from, 1);
         }
         if (message.to === profile.email && message.from !== selectedUser?.email) {
           setHasNewMessages(true);
-          setMatchedUsers(prev => {
-            const updated = prev.map(user => 
-              user.email === message.from 
-                ? { ...user, lastMessage: message.text, lastTime: new Date(message.timestamp), time: new Date(message.timestamp).toLocaleString() }
+          setMatchedUsers((prev) => {
+            const updated = prev.map((user) =>
+              user.email === message.from
+                ? {
+                    ...user,
+                    lastMessage: message.text,
+                    lastTime: new Date(message.timestamp),
+                    time: new Date(message.timestamp).toLocaleString(),
+                  }
                 : user
             );
             return sortUsersByLastMessage(updated);
@@ -145,18 +150,23 @@ export default function ChatPageInner() {
   const fetchMessages = async (userEmail: string) => {
     if (!userEmail) return;
     try {
-      const res = await fetch(`/api/messages/list?mode=conversation&other=${encodeURIComponent(userEmail)}`, { credentials: "include" });
+      const res = await fetch(
+        `/api/messages/list?mode=conversation&other=${encodeURIComponent(userEmail)}`,
+        { credentials: "include" }
+      );
       const data = await res.json();
       if (data.success) {
         setMessages(data.messages);
 
-        const unreadIds = data.messages.filter((m: Message) => !m.read && m.to === profile?.email).map((m: Message) => m._id);
+        const unreadIds = data.messages
+          .filter((m: Message) => !m.read && m.to === profile?.email)
+          .map((m: Message) => m._id);
         if (unreadIds.length > 0) {
           await fetch("/api/messages/mark-read", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ messageIds: unreadIds }),
-            credentials: "include"
+            credentials: "include",
           });
           updateUnreadCount(userEmail, -unreadIds.length);
           refreshUnreadCount();
@@ -168,11 +178,11 @@ export default function ChatPageInner() {
   };
 
   const updateUnreadCount = (email: string, change: number) => {
-    setMatchedUsers(prev => {
-      const updated = prev.map(u => 
+    setMatchedUsers((prev) => {
+      const updated = prev.map((u) =>
         u.email === email ? { ...u, unread: Math.max(0, u.unread + change) } : u
       );
-      setHasNewMessages(updated.some(u => u.unread > 0));
+      setHasNewMessages(updated.some((u) => u.unread > 0));
       return sortUsersByLastMessage(updated);
     });
   };
@@ -194,7 +204,7 @@ export default function ChatPageInner() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(msg),
-        credentials: "include"
+        credentials: "include",
       });
       if (res.ok) {
         const newMsg: Message = {
@@ -203,25 +213,39 @@ export default function ChatPageInner() {
           to: selectedUser.email,
           text: newMessage.trim(),
           timestamp: new Date().toISOString(),
-          read: false
+          read: false,
         };
-        setMessages(prev => [...prev, newMsg]);
+        setMessages((prev) => [...prev, newMsg]);
         setNewMessage("");
-        setMatchedUsers(prev => sortUsersByLastMessage(prev.map(u =>
-          u.email === selectedUser.email ? { ...u, lastMessage: newMessage.trim(), lastTime: new Date(), time: new Date().toLocaleString() } : u
-        )));
+        setMatchedUsers((prev) =>
+          sortUsersByLastMessage(
+            prev.map((u) =>
+              u.email === selectedUser.email
+                ? {
+                    ...u,
+                    lastMessage: newMessage.trim(),
+                    lastTime: new Date(),
+                    time: new Date().toLocaleString(),
+                  }
+                : u
+            )
+          )
+        );
       }
     } catch (e) {
       console.error("Error sending message:", e);
     }
   };
 
-  const filteredUsers = matchedUsers.filter(u =>
-    u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.email.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredUsers = matchedUsers.filter(
+    (u) =>
+      u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  useEffect(() => { fetchMatchedUsers(); }, [profile?.email]);
+  useEffect(() => {
+    fetchMatchedUsers();
+  }, [profile?.email]);
 
   useEffect(() => {
     if (profile?.email) {
@@ -234,9 +258,125 @@ export default function ChatPageInner() {
   if (isLoading) return <div>Loading your matches...</div>;
 
   return (
-    <div>
-      {/* Keep your full UI here  unchanged from your current return */}
-      {/* I shortened here for clarity, but paste your full JSX return block */}
+    <div className="flex h-[calc(100vh-4rem)] gap-4 p-2 sm:p-4">
+      {/* Left: matches list */}
+      <div className="w-72 shrink-0 hidden md:flex flex-col border rounded-lg">
+        <div className="p-3 border-b">
+          <div className="flex items-center gap-2">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search matches..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
+        <ScrollArea className="flex-1">
+          <div className="p-2 flex flex-col gap-1">
+            {filteredUsers.length === 0 && (
+              <div className="text-center text-sm text-muted-foreground py-6">
+                No matches yet
+              </div>
+            )}
+            {filteredUsers.map((u) => (
+              <button
+                key={u.email}
+                onClick={() => handleUserSelect(u)}
+                className={`w-full text-left px-3 py-2 rounded-md hover:bg-accent transition ${
+                  selectedUser?.email === u.email ? "bg-accent" : ""
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={u.profileImage} alt={u.name} />
+                    <AvatarFallback>
+                      <User className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium truncate">{u.name || u.email}</span>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">{u.time}</span>
+                    </div>
+                    <div className="text-sm text-muted-foreground truncate">{u.lastMessage}</div>
+                  </div>
+                  {u.unread > 0 && <Badge className="ml-auto">{u.unread}</Badge>}
+                </div>
+              </button>
+            ))}
+          </div>
+        </ScrollArea>
+      </div>
+
+      {/* Right: conversation */}
+      <div className="flex-1 flex flex-col border rounded-lg">
+        <div className="p-3 border-b flex items-center gap-3">
+          {selectedUser ? (
+            <>
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={selectedUser.profileImage} alt={selectedUser.name} />
+                <AvatarFallback>
+                  <User className="h-4 w-4" />
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0">
+                <div className="font-medium truncate">{selectedUser.name || selectedUser.email}</div>
+                <div className="text-xs text-muted-foreground truncate">{selectedUser.email}</div>
+              </div>
+            </>
+          ) : (
+            <div className="text-sm text-muted-foreground">Select a match to start chatting</div>
+          )}
+        </div>
+
+        <ScrollArea className="flex-1">
+          <div className="p-4 space-y-2">
+            {!selectedUser && (
+              <div className="text-center text-sm text-muted-foreground py-10">
+                Pick someone from the list to view messages
+              </div>
+            )}
+            {selectedUser &&
+              messages.map((m) => {
+                const mine = m.from === profile?.email;
+                return (
+                  <div key={m._id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+                    <Card className={`max-w-[75%] ${mine ? "bg-primary text-primary-foreground" : ""}`}>
+                      <CardContent className="p-3">
+                        <div className="whitespace-pre-wrap break-words text-sm">{m.text}</div>
+                        <div
+                          className={`mt-1 text-[10px] opacity-70 ${
+                            mine ? "text-primary-foreground" : "text-muted-foreground"
+                          }`}
+                        >
+                          {new Date(m.timestamp).toLocaleString()}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                );
+              })}
+            <div ref={bottomRef} />
+          </div>
+        </ScrollArea>
+
+        <div className="p-3 border-t">
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder={selectedUser ? "Type a message..." : "Select a user to start"}
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              disabled={!selectedUser}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSendMessage();
+              }}
+            />
+            <Button onClick={handleSendMessage} disabled={!selectedUser || !newMessage.trim()}>
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
