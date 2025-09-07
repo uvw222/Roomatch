@@ -36,6 +36,7 @@ export async function GET(
         age: profileData.age,
         bio: profileData.bio,
         profileImage: profileData.profileImage,
+        galleryImages: profileData.galleryImages || [],
         occupation: profileData.occupation,
         location: profileData.location,
         coordinates: profileData.coordinates,
@@ -47,6 +48,8 @@ export async function GET(
         isSmoker: profileData.isSmoker,
         lifestyle: profileData.lifestyle,
         preferences: profileData.preferences,
+        renterInfo: profileData.renterInfo,
+        landlordInfo: profileData.landlordInfo,
       },
     })
   } catch (error) {

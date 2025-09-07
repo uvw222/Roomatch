@@ -23,6 +23,10 @@ const ProfileSchema = new mongoose.Schema({
   hasPets: Boolean,
   isSmoker: Boolean,
   profileImage: String,
+  galleryImages: {
+    type: [String],
+    default: [],
+  },
   lifestyle: {
     cleanliness: Number,
     noise: Number,

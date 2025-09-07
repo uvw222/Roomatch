@@ -9,9 +9,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Crop, Upload, X, User, Save, ArrowLeft, Camera, MapPin, Briefcase, Calendar, FileText, Home, DollarSign, Clock, Shield, Settings } from "lucide-react"
+import { Upload, X, User, Save, ArrowLeft, Camera, MapPin, Briefcase, Calendar, FileText, Home, DollarSign, Clock, Shield, Settings, Plus, Image as ImageIcon } from "lucide-react"
 import LocationPicker from "@/components/LocationPicker"
-import ImageCropper from "@/components/ImageCropper"
 import { useProfile } from "../../../hooks/useProfile"
 import Link from "next/link"
 
@@ -26,6 +25,7 @@ type Profile = {
   }
   bio: string
   profileImage?: string
+  galleryImages?: string[]
   userType?: string
   budget?: number
   // Renter-specific fields
@@ -88,6 +88,7 @@ export default function EditProfilePage() {
     coordinates: undefined,
     bio: "",
     profileImage: "",
+    galleryImages: [],
     userType: "",
     budget: 0,
     renterInfo: {
@@ -140,7 +141,7 @@ export default function EditProfilePage() {
   const [isNewUser, setIsNewUser] = useState(false)
 
   const [newImage, setNewImage] = useState<File | null>(null)
-  const [croppedImage, setCroppedImage] = useState<File | null>(null)
+  const [newGalleryImages, setNewGalleryImages] = useState<File[]>([])
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
@@ -160,6 +161,7 @@ export default function EditProfilePage() {
           coordinates: globalProfile.coordinates,
           bio: globalProfile.bio ?? "",
           profileImage: globalProfile.profileImage ?? "",
+          galleryImages: (globalProfile as any).galleryImages ?? [],
           userType: globalProfile.userType ?? "",
           budget: globalProfile.budget ?? 0,
           renterInfo: globalProfile.renterInfo || {
@@ -282,18 +284,29 @@ export default function EditProfilePage() {
     const file = e.target.files?.[0]
     if (file) {
       setNewImage(file)
-      setCroppedImage(null) // Reset cropped image when new file is selected
     }
   }
 
-  const handleCropComplete = (croppedFile: File) => {
-    setCroppedImage(croppedFile)
-    setNewImage(null) // Clear the original file
+  const handleGalleryFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (files) {
+      setNewGalleryImages(prev => [...prev, ...Array.from(files)])
+    }
   }
 
   const removeImage = () => {
     setNewImage(null)
-    setCroppedImage(null)
+  }
+
+  const removeGalleryImage = (index: number) => {
+    setNewGalleryImages(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const removeExistingGalleryImage = (index: number) => {
+    setProfile(prev => ({
+      ...prev,
+      galleryImages: prev.galleryImages?.filter((_, i) => i !== index) || []
+    }))
   }
 
   const handleSubmit = async () => {
@@ -355,14 +368,18 @@ export default function EditProfilePage() {
         formData.append("longitude", String(profile.coordinates.longitude))
       }
 
-      // Use cropped image if available, otherwise use new image
-      if (croppedImage) {
-        formData.append("profileImage", croppedImage)
-      } else if (newImage) {
+      // Add profile image if available
+      if (newImage) {
         formData.append("profileImage", newImage)
       }
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/update`, {
+      // Add gallery images (files) - same logic as profile image
+      newGalleryImages.forEach((file, index) => {
+        formData.append(`galleryImage_${index}`, file)
+      })
+      formData.append("galleryImageCount", String(newGalleryImages.length))
+
+      const res = await fetch(`/api/profile/update`, {
         method: "POST",
         body: formData,
         credentials: "include",
@@ -436,81 +453,67 @@ export default function EditProfilePage() {
           </div>
         )}
 
-        <div className="grid gap-8 lg:grid-cols-2">
-          {/* Profile Image Section */}
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
-            <CardHeader>
+        <div className="grid gap-8 lg:grid-cols-3">
+          {/* Profile Image Section - Smaller on web */}
+          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl lg:col-span-1">
+            <CardHeader className="pb-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-gradient-to-br from-orange-100 to-red-100 rounded-lg">
                   <Camera className="h-5 w-5 text-orange-600" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl font-bold text-slate-800">Profile Picture</CardTitle>
-                  <CardDescription className="text-slate-600">Upload a photo to help others recognize you</CardDescription>
+                  <CardTitle className="text-lg font-bold text-slate-800">Profile Picture</CardTitle>
+                  <CardDescription className="text-slate-600 text-sm">Upload your main photo</CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4">
               <div className="text-center">
                 <div className="relative inline-block">
                   <img
                     src={
-                      croppedImage
-                        ? URL.createObjectURL(croppedImage)
-                        : newImage
+                      newImage
                         ? URL.createObjectURL(newImage)
                         : profile.profileImage || "/placeholder.svg"
                     }
                     alt="Profile"
-                    className="w-40 h-40 rounded-2xl object-cover mx-auto border-4 border-slate-200 shadow-lg"
+                    className="w-28 h-28 lg:w-32 lg:h-32 rounded-2xl object-cover mx-auto border-3 border-slate-200 shadow-lg"
                   />
-                  {(newImage || croppedImage) && (
+                  {newImage && (
                     <button
                       onClick={removeImage}
-                      className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-full p-2 hover:from-red-600 hover:to-pink-600 shadow-lg transition-all duration-200"
+                      className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-full p-1.5 hover:from-red-600 hover:to-pink-600 shadow-lg transition-all duration-200"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-3 w-3" />
                     </button>
                   )}
                 </div>
                 
-                <div className="flex gap-3 justify-center mt-4">
+                <div className="mt-4">
                   <Input 
                     type="file" 
-                    accept="image/*" 
-                    className="max-w-xs border-slate-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200" 
+                    accept="image/*"
+                    className="hidden" 
                     onChange={handleFileChange}
                     id="profile-image"
                   />
-                  <Label htmlFor="profile-image" className="cursor-pointer">
-                    <Button variant="outline" size="sm" className="border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200">
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload
-                    </Button>
-                  </Label>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200"
+                    onClick={() => document.getElementById('profile-image')?.click()}
+                    type="button"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload Photo
+                  </Button>
                 </div>
-
-                {newImage && (
-                  <div className="mt-4">
-                    <ImageCropper
-                      imageFile={newImage}
-                      onCropComplete={handleCropComplete}
-                      aspectRatio={1}
-                      trigger={
-                        <Button variant="outline" size="sm" className="border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200">
-                          <Crop className="h-4 w-4 mr-2" />
-                          Crop Image
-                        </Button>
-                      }
-                    />
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
 
           {/* Form Fields */}
-          <div className="space-y-6">
+          <div className="space-y-6 lg:col-span-2">
             {/* Basic Information Card */}
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
               <CardHeader>
@@ -652,6 +655,92 @@ export default function EditProfilePage() {
                       {profile.bio.length}/500
                     </p>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Gallery Images Card */}
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-lg">
+                    <ImageIcon className="h-5 w-5 text-indigo-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl font-bold text-slate-800">Photo Gallery</CardTitle>
+                    <CardDescription className="text-slate-600">Add more photos to showcase yourself</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Existing Gallery Images */}
+                {profile.galleryImages && profile.galleryImages.length > 0 && (
+                  <div>
+                    <Label className="text-sm font-semibold text-slate-700 mb-3 block">Current Photos</Label>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                      {profile.galleryImages.map((image, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={image}
+                            alt={`Gallery ${index + 1}`}
+                            className="w-full h-20 object-cover rounded-lg border-2 border-slate-200"
+                          />
+                          <button
+                            onClick={() => removeExistingGalleryImage(index)}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* New Gallery Images Preview */}
+                {newGalleryImages.length > 0 && (
+                  <div>
+                    <Label className="text-sm font-semibold text-slate-700 mb-3 block">New Photos to Add</Label>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                      {newGalleryImages.map((file, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={`New ${index + 1}`}
+                            className="w-full h-20 object-cover rounded-lg border-2 border-orange-200"
+                          />
+                          <button
+                            onClick={() => removeGalleryImage(index)}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Add Gallery Images Button */}
+                <div>
+                  <Input 
+                    type="file" 
+                    accept="image/*"
+                    multiple
+                    className="hidden" 
+                    onChange={handleGalleryFileChange}
+                    id="gallery-images"
+                  />
+                  <Button 
+                    variant="outline" 
+                    className="w-full border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200"
+                    onClick={() => document.getElementById('gallery-images')?.click()}
+                    type="button"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Photos to Gallery
+                  </Button>
+                  <p className="text-xs text-slate-500 mt-2">You can select multiple images at once</p>
                 </div>
               </CardContent>
             </Card>

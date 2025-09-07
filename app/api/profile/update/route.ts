@@ -2,7 +2,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCollection } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
-import { uploadToCloudinary } from "@/lib/cloudinary";
+
+// Helper function to convert image buffer to base64 data URL
+function bufferToDataURL(buffer: Buffer, mimeType: string): string {
+  const base64 = buffer.toString('base64');
+  return `data:${mimeType};base64,${base64}`;
+}
+
+// Helper function to get MIME type from file
+function getMimeType(file: File): string {
+  if (file.type) return file.type;
+  
+  // Fallback based on file extension if type is not available
+  const extension = file.name.split('.').pop()?.toLowerCase();
+  switch (extension) {
+    case 'jpg':
+    case 'jpeg':
+      return 'image/jpeg';
+    case 'png':
+      return 'image/png';
+    case 'gif':
+      return 'image/gif';
+    case 'webp':
+      return 'image/webp';
+    default:
+      return 'image/jpeg';
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,20 +51,37 @@ export async function POST(req: NextRequest) {
       longitude: Number(longitude)
     } : undefined;
 
-    let imageUrl = "";
+    let imageDataURL = "";
+    let galleryDataURLs: string[] = [];
 
     const imageFile = formData.get("profileImage");
     if (imageFile && typeof imageFile === "object" && "arrayBuffer" in imageFile) {
       try {
         const arrayBuffer = await imageFile.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
-        const uploadResult = await uploadToCloudinary(
-          buffer,
-          email.replace(/[^a-zA-Z0-9]/g, "")
-        );
-        imageUrl = (uploadResult as any)?.secure_url || "";
+        const mimeType = getMimeType(imageFile as File);
+        imageDataURL = bufferToDataURL(buffer, mimeType);
       } catch (uploadErr) {
-        console.error("Cloudinary upload failed:", uploadErr);
+        console.error("Profile image processing failed:", uploadErr);
+      }
+    }
+
+    // Handle gallery images
+    const galleryImageCount = Number(formData.get("galleryImageCount") || 0);
+    for (let i = 0; i < galleryImageCount; i++) {
+      const galleryFile = formData.get(`galleryImage_${i}`);
+      if (galleryFile && typeof galleryFile === "object" && "arrayBuffer" in galleryFile) {
+        try {
+          const arrayBuffer = await galleryFile.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+          const mimeType = getMimeType(galleryFile as File);
+          const galleryDataURL = bufferToDataURL(buffer, mimeType);
+          if (galleryDataURL) {
+            galleryDataURLs.push(galleryDataURL);
+          }
+        } catch (uploadErr) {
+          console.error("Gallery image processing failed:", uploadErr);
+        }
       }
     }
 
@@ -55,8 +98,13 @@ export async function POST(req: NextRequest) {
       },
     };
 
-    if (imageUrl) {
-      updateDoc.$set.profileImage = imageUrl;
+    if (imageDataURL) {
+      updateDoc.$set.profileImage = imageDataURL;
+    }
+
+    // Handle gallery images - save base64 data URLs to MongoDB
+    if (galleryDataURLs.length > 0) {
+      updateDoc.$set.galleryImages = galleryDataURLs;
     }
 
     await profiles.updateOne({ email }, updateDoc, { upsert: true });

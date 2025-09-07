@@ -1,14 +1,16 @@
 "use client"
 
+import { useState } from "react"
 import { useProfile } from "../../../hooks/useProfile"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { MapPin, User, Edit, Calendar, Briefcase, Eye, Heart, Star, Award, TrendingUp } from "lucide-react"
+import { MapPin, User, Edit, Calendar, Briefcase, Eye, Heart, Star, Award, TrendingUp, Image as ImageIcon, X } from "lucide-react"
 import Link from "next/link"
 import SmartMap from "@/components/SmartMap"
 
 export default function MyProfilePage() {
   const { profile, isLoading } = useProfile()
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
   if (isLoading) {
     return (
@@ -127,6 +129,72 @@ export default function MyProfilePage() {
                       {profile.bio || "No bio available yet. Add one to help others get to know you better!"}
                     </p>
                   </div>
+                </CardContent>
+              </Card>
+
+              {/* Photo Gallery - Featured Section */}
+              <Card className="border border-gray-200 bg-white shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-t-lg">
+                  <CardTitle className="flex items-center gap-3 text-lg">
+                    <ImageIcon className="h-6 w-6" />
+                    📸 My Photo Gallery
+                    <span className="bg-white/20 px-3 py-1 rounded-full text-sm">
+                      {profile.galleryImages?.length || 0} photos
+                    </span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  {profile.galleryImages && profile.galleryImages.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                      {profile.galleryImages.map((image, index) => (
+                        <div
+                          key={index}
+                          className="relative group cursor-pointer overflow-hidden rounded-xl bg-white shadow-lg border-2 border-gray-200 hover:border-gray-400 hover:shadow-xl transition-all duration-300"
+                          onClick={() => setSelectedImage(image)}
+                        >
+                          <img
+                            src={image}
+                            alt={`My photo ${index + 1}`}
+                            className="w-full h-48 sm:h-56 object-cover transition-transform duration-300 group-hover:scale-110"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-14 h-14 bg-white/90 rounded-full flex items-center justify-center shadow-2xl transform scale-0 group-hover:scale-100 transition-transform duration-300">
+                                <Eye className="h-6 w-6 text-gray-700" />
+                              </div>
+                            </div>
+                          </div>
+                          <div className="absolute top-3 left-3 bg-gray-600 text-white text-sm px-3 py-1 rounded-full shadow-lg">
+                            {index + 1} / {profile.galleryImages?.length || 0}
+                          </div>
+                          <div className="absolute bottom-3 right-3 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
+                            Click to view
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-16 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+                      <div className="bg-gray-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <ImageIcon className="h-12 w-12 text-gray-500" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-gray-700 mb-3">No Photos Yet</h3>
+                      <p className="text-gray-500 text-lg mb-4">
+                        You haven't added any photos to your gallery yet.
+                      </p>
+                      <Link href="/profile/edit">
+                        <Button className="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white shadow-lg hover:shadow-xl transition-all duration-200">
+                          <ImageIcon className="h-4 w-4 mr-2" />
+                          Add Photos
+                        </Button>
+                      </Link>
+                      <div className="text-sm text-gray-400 bg-white p-4 rounded-lg max-w-md mx-auto mt-4 border border-gray-200">
+                        <strong>Debug Info:</strong><br/>
+                        Gallery Images: {JSON.stringify(profile.galleryImages)}<br/>
+                        Length: {profile.galleryImages?.length || 'undefined'}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -263,6 +331,29 @@ export default function MyProfilePage() {
             </div>
           </div>
         </div>
+
+        {/* Image Modal */}
+        {selectedImage && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+            onClick={() => setSelectedImage(null)}
+          >
+            <div className="relative max-w-4xl max-h-full">
+              <button
+                onClick={() => setSelectedImage(null)}
+                className="absolute top-4 right-4 z-10 bg-white bg-opacity-90 hover:bg-opacity-100 rounded-full p-2 transition-all duration-200"
+              >
+                <X className="h-6 w-6 text-gray-700" />
+              </button>
+              <img
+                src={selectedImage}
+                alt="Gallery image"
+                className="max-w-full max-h-full object-contain rounded-lg"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

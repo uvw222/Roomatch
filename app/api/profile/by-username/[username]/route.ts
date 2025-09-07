@@ -37,6 +37,7 @@ export async function GET(
       age: profile.age,
       bio: profile.bio,
       profileImage: profile.profileImage || "",
+      galleryImages: profile.galleryImages || [],
       occupation: profile.occupation,
       location: profile.location,
       email: profile.email,
@@ -48,7 +49,9 @@ export async function GET(
       hasPets: profile.hasPets,
       isSmoker: profile.isSmoker,
       lifestyle: profile.lifestyle,
-      preferences: profile.preferences
+      preferences: profile.preferences,
+      renterInfo: profile.renterInfo,
+      landlordInfo: profile.landlordInfo
     }
 
     return NextResponse.json({ 

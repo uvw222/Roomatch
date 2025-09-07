@@ -14,6 +14,7 @@ interface Profile {
   }
   bio: string
   profileImage?: string
+  galleryImages?: string[]
   email?: string
   userType: "renter" | "landlord"
   views?: number

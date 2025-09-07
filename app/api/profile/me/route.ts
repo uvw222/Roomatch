@@ -26,6 +26,7 @@ export async function GET() {
         location: profile.location,
         bio: profile.bio,
         profileImage: profile.profileImage || "",
+        galleryImages: profile.galleryImages || [],
         coordinates: profile.coordinates,
         email: profile.email,
         userType: profile.userType,
@@ -38,6 +39,8 @@ export async function GET() {
         moveInDate: profile.moveInDate,
         hasPets: profile.hasPets,
         isSmoker: profile.isSmoker,
+        renterInfo: profile.renterInfo,
+        landlordInfo: profile.landlordInfo,
         createdAt: profile.createdAt,
       },
     }, { status: 200 });
