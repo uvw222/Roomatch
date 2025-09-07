@@ -112,8 +112,8 @@ describe("ChatPageInner integration", () => {
 
     // Matches list appears after fetch
     await waitFor(() => {
-      expect(screen.getByText("First")).toBeInTheDocument();
-      expect(screen.getByText("Second")).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /First/ })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Second/ })).toBeInTheDocument();
     });
 
     // Select second user -> should trigger fetch messages for that user
@@ -135,10 +135,13 @@ describe("ChatPageInner integration", () => {
       }),
     } as any);
 
-    fireEvent.click(screen.getByText("Second"));
+    fireEvent.click(screen.getByRole('button', { name: /Second/ }));
 
     await waitFor(() => {
       expect(screen.getByText("Hi Second")).toBeInTheDocument();
     });
   });
 });
+
+
+
