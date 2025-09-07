@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,17 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Send,
-  User,
-  Search,
-  Heart,
-  MessageCircle,
-  Users,
-  Bell,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { Send, User, Search, Bell } from "lucide-react";
 import { useProfile } from "@/hooks/useProfile";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { getSocketClient } from "@/lib/socketClient";
@@ -61,6 +51,8 @@ export default function ChatPageInner() {
   const [socket, setSocket] = useState<any>(null);
   const [hasNewMessages, setHasNewMessages] = useState(false);
   const [isMobileUserListOpen, setIsMobileUserListOpen] = useState(false);
+
+  const totalUnread = useMemo(() => matchedUsers.reduce((sum, u) => sum + (u.unread || 0), 0), [matchedUsers]);
 
   // Get initial user from URL params
   const initialUserEmail = searchParams?.get("other");
@@ -111,7 +103,6 @@ export default function ChatPageInner() {
           return sortUsersByLastMessage(updated);
         });
 
-        // Badge indicator when new inbound arrives for non-selected thread
         if (message.to === profile.email && message.from !== selectedUser?.email) {
           setHasNewMessages(true);
         }
@@ -147,7 +138,7 @@ export default function ChatPageInner() {
             setSelectedUser(initialUser);
             fetchMessages(initialUser.email);
           }
-        } else if (sorted.length > 0) {
+        } else if (sorted.length > 0 && !selectedUser) {
           setSelectedUser(sorted[0]);
           fetchMessages(sorted[0].email);
         }
@@ -206,6 +197,8 @@ export default function ChatPageInner() {
   const handleUserSelect = async (u: MatchedUser) => {
     setSelectedUser(u);
     await fetchMessages(u.email);
+    // Close mobile list on selection
+    setIsMobileUserListOpen(false);
   };
 
   const handleSendMessage = async () => {
@@ -220,9 +213,7 @@ export default function ChatPageInner() {
         credentials: "include",
       });
       if (res.ok) {
-        // Clear input; rely on socket "messages:new" to render the sent message
         setNewMessage("");
-        // Fallback: refresh thread shortly in case socket echo is delayed
         fetchMessages(selectedUser.email);
       }
     } catch (e) {
@@ -232,7 +223,7 @@ export default function ChatPageInner() {
 
   const filteredUsers = matchedUsers.filter(
     (u) =>
-      u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (u.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -247,12 +238,47 @@ export default function ChatPageInner() {
     }
   }, [profile?.email]);
 
+  /* ---- UI bits reused ---- */
+  const MatchesList = (
+    <div className="p-2 flex flex-col gap-1">
+      {filteredUsers.length === 0 && (
+        <div className="text-center text-sm text-muted-foreground py-6">No matches yet</div>
+      )}
+      {filteredUsers.map((u) => (
+        <button
+          key={u.email}
+          onClick={() => handleUserSelect(u)}
+          className={`w-full text-left px-3 py-2 rounded-md hover:bg-accent transition ${
+            selectedUser?.email === u.email ? "bg-accent" : ""
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={u.profileImage} alt={u.name} />
+              <AvatarFallback>
+                <User className="h-4 w-4" />
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-medium truncate">{u.name || u.email}</span>
+                <span className="text-xs text-muted-foreground whitespace-nowrap">{u.time}</span>
+              </div>
+              <div className="text-sm text-muted-foreground truncate">{u.lastMessage}</div>
+            </div>
+            {u.unread > 0 && <Badge className="ml-auto">{u.unread}</Badge>}
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+
   /* ---- Render ---- */
   if (isLoading) return <div>Loading your matches...</div>;
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] gap-4 p-2 sm:p-4">
-      {/* Left: matches list */}
+    <div className="relative flex h-[calc(100vh-4rem)] gap-4 p-2 sm:p-4">
+      {/* Left: matches list (desktop) */}
       <div className="w-72 shrink-0 hidden md:flex flex-col border rounded-lg">
         <div className="p-3 border-b">
           <div className="flex items-center gap-2">
@@ -264,62 +290,42 @@ export default function ChatPageInner() {
             />
           </div>
         </div>
-        <ScrollArea className="flex-1">
-          <div className="p-2 flex flex-col gap-1">
-            {filteredUsers.length === 0 && (
-              <div className="text-center text-sm text-muted-foreground py-6">
-                No matches yet
-              </div>
-            )}
-            {filteredUsers.map((u) => (
-              <button
-                key={u.email}
-                onClick={() => handleUserSelect(u)}
-                className={`w-full text-left px-3 py-2 rounded-md hover:bg-accent transition ${
-                  selectedUser?.email === u.email ? "bg-accent" : ""
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={u.profileImage} alt={u.name} />
-                    <AvatarFallback>
-                      <User className="h-4 w-4" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-medium truncate">{u.name || u.email}</span>
-                      <span className="text-xs text-muted-foreground whitespace-nowrap">{u.time}</span>
-                    </div>
-                    <div className="text-sm text-muted-foreground truncate">{u.lastMessage}</div>
-                  </div>
-                  {u.unread > 0 && <Badge className="ml-auto">{u.unread}</Badge>}
-                </div>
-              </button>
-            ))}
-          </div>
-        </ScrollArea>
+        <ScrollArea className="flex-1">{MatchesList}</ScrollArea>
       </div>
 
       {/* Right: conversation */}
       <div className="flex-1 flex flex-col border rounded-lg">
-        <div className="p-3 border-b flex items-center gap-3">
-          {selectedUser ? (
-            <>
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={selectedUser.profileImage} alt={selectedUser.name} />
-                <AvatarFallback>
-                  <User className="h-4 w-4" />
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0">
-                <div className="font-medium truncate">{selectedUser.name || selectedUser.email}</div>
-                <div className="text-xs text-muted-foreground truncate">{selectedUser.email}</div>
-              </div>
-            </>
-          ) : (
-            <div className="text-sm text-muted-foreground">Select a match to start chatting</div>
-          )}
+        <div className="p-3 border-b flex items-center justify-between gap-3">
+          {/* Mobile: open matches */}
+          <div className="md:hidden">
+            <Button variant="outline" onClick={() => setIsMobileUserListOpen(true)}>
+              Chats
+              {totalUnread > 0 && (
+                <Badge variant="destructive" className="ml-2">
+                  {totalUnread}
+                </Badge>
+              )}
+            </Button>
+          </div>
+          <div className="flex items-center gap-3 min-w-0 mx-auto md:mx-0">
+            {selectedUser ? (
+              <>
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={selectedUser.profileImage} alt={selectedUser.name} />
+                  <AvatarFallback>
+                    <User className="h-4 w-4" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <div className="font-medium truncate">{selectedUser.name || selectedUser.email}</div>
+                  <div className="text-xs text-muted-foreground truncate">{selectedUser.email}</div>
+                </div>
+              </>
+            ) : (
+              <div className="text-sm text-muted-foreground">Select a match to start chatting</div>
+            )}
+          </div>
+          <div className="hidden md:block" />
         </div>
 
         <ScrollArea className="flex-1">
@@ -370,6 +376,27 @@ export default function ChatPageInner() {
           </div>
         </div>
       </div>
+
+      {/* Mobile overlay for matches list */}
+      {isMobileUserListOpen && (
+        <div className="md:hidden fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-black/30" onClick={() => setIsMobileUserListOpen(false)} />
+          <div className="absolute left-0 top-0 h-full w-[85%] max-w-sm bg-background border-r shadow-xl flex flex-col">
+            <div className="p-3 border-b flex items-center gap-2">
+              <Button variant="ghost" onClick={() => setIsMobileUserListOpen(false)}>Close</Button>
+              <div className="flex items-center gap-2 flex-1">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search matches..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+            <ScrollArea className="flex-1">{MatchesList}</ScrollArea>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
