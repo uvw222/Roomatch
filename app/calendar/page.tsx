@@ -51,13 +51,27 @@ export default function CalendarPage() {
 
   // Get user email from localStorage or cookies
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedEmail = localStorage.getItem('userEmail') || 
-                         document.cookie.split('; ').find(row => row.startsWith('user_email='))?.split('=')[1]
-      if (storedEmail) {
-        setUserEmail(storedEmail)
+    // Prefer server session via /api/me which may use httpOnly cookies; fallback to localStorage/cookie
+    ;(async () => {
+      try {
+        const res = await fetch('/api/me', { credentials: 'same-origin' })
+        if (res.ok) {
+          const json = await res.json()
+          if (json.user?.email) {
+            setUserEmail(json.user.email)
+            return
+          }
+        }
+      } catch (e) {
+        // ignore
       }
-    }
+
+      if (typeof window !== 'undefined') {
+        const storedEmail = localStorage.getItem('userEmail') || 
+                           document.cookie.split('; ').find(row => row.startsWith('user_email='))?.split('=')[1]
+        if (storedEmail) setUserEmail(storedEmail)
+      }
+    })()
   }, [])
 
   // Load meetings from localStorage on mount
