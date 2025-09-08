@@ -124,6 +124,7 @@ export default function CalendarPage() {
           credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+      ownerEmail: userEmail,
             with: meeting.with,
             date: meeting.date.toISOString(),
             time: meeting.time,
@@ -135,9 +136,11 @@ export default function CalendarPage() {
         if (!res.ok) throw new Error('Failed to create on server')
         const data = await res.json()
         // Replace local optimistic id with server id
-        setMeetings((prev) => prev.map((m) => (m.id === localId ? { ...m, id: data.meeting._id } : m)))
+    setMeetings((prev) => prev.map((m) => (m.id === localId ? { ...m, id: data.meeting._id } : m)))
       } catch (e) {
-        console.warn('Failed to persist meeting to server', e)
+    console.warn('Failed to persist meeting to server', e)
+    // Revert optimistic update on failure
+    setMeetings((prev) => prev.filter((m) => m.id !== localId))
       }
     })()
   }

@@ -17,7 +17,16 @@ const MeetingCreateSchema = z.object({
 
 export async function GET(req: Request) {
   try {
-    const user = await getCurrentUser(req)
+    let user = await getCurrentUser(req)
+
+    // If no authenticated user, try to fallback to a cookie-provided user_email
+    if (!user) {
+      const cookieHeader = (req as any).headers?.get?.('cookie') || ''
+      const match = cookieHeader.match(/(?:^|; )user_email=([^;]+)/)
+      const emailFromCookie = match ? decodeURIComponent(match[1]) : null
+      if (emailFromCookie) user = { email: emailFromCookie, userId: '', userType: 'renter', name: '' }
+    }
+
     if (!user) {
       captureMessage('Unauthorized GET /api/meetings attempt')
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
@@ -34,13 +43,27 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const user = await getCurrentUser(req)
+    let user = await getCurrentUser(req)
+
+    const body = await req.json()
+
+    // If no authenticated user, try fallback ownerEmail from body or cookies
+    let fallbackEmail: string | null = null
+    if (!user) {
+      if (body?.ownerEmail) fallbackEmail = body.ownerEmail
+      else {
+        const cookieHeader = (req as any).headers?.get?.('cookie') || ''
+        const match = cookieHeader.match(/(?:^|; )user_email=([^;]+)/)
+        fallbackEmail = match ? decodeURIComponent(match[1]) : null
+      }
+      if (fallbackEmail) user = { email: fallbackEmail, userId: '', userType: 'renter', name: '' }
+    }
+
     if (!user) {
       captureMessage('Unauthorized POST /api/meetings attempt')
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    const body = await req.json()
     const parse = MeetingCreateSchema.safeParse(body)
     if (!parse.success) return NextResponse.json({ error: parse.error.format() }, { status: 400 })
 
@@ -66,7 +89,16 @@ export async function POST(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
-    const user = await getCurrentUser(req)
+    let user = await getCurrentUser(req)
+
+    // fallback to cookie-provided user_email if unauthenticated
+    if (!user) {
+      const cookieHeader = (req as any).headers?.get?.('cookie') || ''
+      const match = cookieHeader.match(/(?:^|; )user_email=([^;]+)/)
+      const emailFromCookie = match ? decodeURIComponent(match[1]) : null
+      if (emailFromCookie) user = { email: emailFromCookie, userId: '', userType: 'renter', name: '' }
+    }
+
     if (!user) {
       captureMessage('Unauthorized DELETE /api/meetings attempt')
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
