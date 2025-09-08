@@ -182,7 +182,7 @@ export default function SettingsPage() {
             <p className="text-slate-600 text-lg">Manage your account preferences and privacy</p>
           </div>
           <Link href="/dashboard">
-            <Button variant="outline" className="flex items-center gap-2 border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200">
+            <Button variant="outline" className="flex items-center gap-2 border-slate-200 hover:bg-slate-50 hover:border-slate-300 hover:text-gray-500 transition-all duration-200">
               <ArrowLeft className="h-4 w-4" />
               Back to Dashboard
             </Button>

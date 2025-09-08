@@ -57,7 +57,7 @@ export default function MyProfilePage() {
               <p className="text-slate-600 text-lg">Your Profile</p>
             </div>
             <Link href="/profile/edit">
-              <Button variant="outline" className="flex items-center gap-2 border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 shadow-lg hover:shadow-xl">
+              <Button variant="outline" className="flex items-center gap-2 border-slate-200 hover:bg-slate-50 hover:border-slate-300 hover:text-gray-500 transition-all duration-200 shadow-lg hover:shadow-xl">
                 <Edit className="h-4 w-4" />
                 Edit Profile
               </Button>
