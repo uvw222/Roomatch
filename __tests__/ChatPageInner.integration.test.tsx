@@ -118,7 +118,7 @@ describe("ChatPageInner integration", () => {
 
     // Select second user -> should trigger fetch messages for that user
     // Push another mocked response for the selection
-    (globalThis.fetch as unknown as vi.Mock).mockResolvedValueOnce({
+  (globalThis.fetch as unknown as any).mockResolvedValueOnce({
       ok: true,
       json: async () => ({
         success: true,

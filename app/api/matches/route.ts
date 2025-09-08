@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { getCollection } from "@/lib/db"
 import { requireAuth, getOppositeUserType } from "@/lib/auth"
-import { ObjectId } from "mongodb"
+import mongoose from 'mongoose'
 
 export async function GET() {
   try {
@@ -19,10 +19,10 @@ export async function GET() {
 
     // Convert all excluded profile IDs to ObjectId
     // Only exclude profiles that the current user has already liked or disliked
-    const excludedIds = [
+  const excludedIds = [
       ...(currentUser.likedProfiles || []),
       ...(currentUser.dislikedProfiles || [])
-    ].map(id => new ObjectId(id))
+  ].map(id => new mongoose.Types.ObjectId(id))
 
     console.log("Debug - Current user:", {
       email: currentUser.email,
@@ -52,7 +52,7 @@ export async function GET() {
     }).limit(50).toArray() // Limit results for performance
 
     console.log("Debug - Found matches:", matches.length)
-    console.log("Debug - Match details:", matches.map(m => ({
+    console.log("Debug - Match details:", matches.map((m: any) => ({
       _id: m._id.toString(),
       name: m.name,
       userType: m.userType,
@@ -61,7 +61,7 @@ export async function GET() {
     })))
 
     // Transform the data to include only necessary fields
-    const transformedMatches = matches.map(profile => ({
+  const transformedMatches = matches.map((profile: any) => ({
       _id: profile._id.toString(),
       name: profile.name,
       age: profile.age,

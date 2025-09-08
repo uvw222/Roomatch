@@ -9,13 +9,13 @@ interface UserTypeBackgroundProps {
 
 export default function UserTypeBackground({ children }: UserTypeBackgroundProps) {
   const { user } = useAuth()
-  const pathname = usePathname()
+  const pathname = usePathname() || ''
 
   // Don't apply user type backgrounds on these routes
   const excludePaths = ["/", "/login", "/register"]
-  const shouldApplyBackground = user && !excludePaths.includes(pathname)
+  const shouldApplyBackground = Boolean(user) && !excludePaths.includes(pathname)
 
-  if (!shouldApplyBackground) {
+  if (!shouldApplyBackground || !user) {
     return <>{children}</>
   }
 

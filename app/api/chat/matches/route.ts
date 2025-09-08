@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { getCollection } from "@/lib/db"
 import { requireAuth } from "@/lib/auth"
-import { ObjectId } from "mongodb"
+import mongoose from 'mongoose'
 
 export async function GET() {
   try {
@@ -16,7 +16,7 @@ export async function GET() {
 
     const myIdString = currentUser._id.toString()
     const likedObjectIds = (currentUser.likedProfiles || [])
-      .map((id: string) => new ObjectId(id))
+      .map((id: string) => new mongoose.Types.ObjectId(id))
 
     // Find mutual matches: profiles that I liked AND liked me back
     const mutualMatches = await profiles.find({
@@ -51,7 +51,7 @@ export async function GET() {
     }
 
     // Transform the data to include chat information
-    const transformedMatches = mutualMatches.map(profile => {
+  const transformedMatches = mutualMatches.map((profile: any) => {
       const chatInfo = messageMap[profile.email] || {
         lastMessage: "Start a conversation!",
         lastTime: profile.createdAt || new Date(), // Use profile creation date as fallback
@@ -72,7 +72,7 @@ export async function GET() {
 
     // Sort by last message time (most recent first)
     // For users with no messages, use their profile creation date as fallback
-    transformedMatches.sort((a, b) => {
+  transformedMatches.sort((a: any, b: any) => {
       const timeA = new Date(a.lastTime).getTime();
       const timeB = new Date(b.lastTime).getTime();
       return timeB - timeA; // Descending order (newest first)

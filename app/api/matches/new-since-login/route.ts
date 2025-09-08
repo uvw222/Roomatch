@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { getCollection } from "@/lib/db"
 import { requireAuth } from "@/lib/auth"
-import { ObjectId } from "mongodb"
+import mongoose from 'mongoose'
 
 export async function GET() {
   try {
@@ -16,7 +16,7 @@ export async function GET() {
 
     const myIdString = currentUser._id.toString()
     const likedObjectIds = (currentUser.likedProfiles || [])
-      .map((id: string) => new ObjectId(id))
+      .map((id: string) => new mongoose.Types.ObjectId(id))
 
     // Find mutual matches: profiles that I liked AND liked me back
     const mutualMatches = await profiles.find({
@@ -27,7 +27,7 @@ export async function GET() {
     // Get the last login time
     const lastLoginAt = currentUser.lastLoginAt || new Date(Date.now() - 24 * 60 * 60 * 1000)
     
-    const newMatches = mutualMatches.filter(match => {
+  const newMatches = mutualMatches.filter((match: any) => {
       // Consider a match "new" if it was created after the last login
       return match.createdAt && new Date(match.createdAt) > new Date(lastLoginAt)
     })
@@ -38,7 +38,7 @@ export async function GET() {
       .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
     // Transform the data to include only necessary fields
-    const transformedMatches = newMatches.map(profile => ({
+  const transformedMatches = newMatches.map((profile: any) => ({
       _id: profile._id.toString(),
       name: profile.name,
       userType: profile.userType,

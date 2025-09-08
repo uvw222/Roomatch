@@ -3,6 +3,8 @@ import connectToDatabase from '@/lib/mongodb'
 import Meeting from '@/models/Meeting'
 import { getCurrentUser } from '@/lib/auth'
 import { z } from 'zod'
+// Use project path alias to reliably resolve the sentry wrapper
+import { captureException, captureMessage } from '@/lib/sentry'
 
 const MeetingCreateSchema = z.object({
   with: z.string().min(1),
@@ -14,49 +16,73 @@ const MeetingCreateSchema = z.object({
 })
 
 export async function GET(req: Request) {
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+  try {
+    const user = await getCurrentUser(req)
+    if (!user) {
+      captureMessage('Unauthorized GET /api/meetings attempt')
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
 
-  await connectToDatabase()
-  const meetings = await Meeting.find({ ownerEmail: user.email }).sort({ date: 1 }).lean()
-  return NextResponse.json({ meetings })
+    await connectToDatabase()
+    const meetings = await Meeting.find({ ownerEmail: user.email }).sort({ date: 1 }).lean()
+    return NextResponse.json({ meetings })
+  } catch (e) {
+    captureException(e)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }
 
 export async function POST(req: Request) {
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+  try {
+    const user = await getCurrentUser(req)
+    if (!user) {
+      captureMessage('Unauthorized POST /api/meetings attempt')
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
 
-  const body = await req.json()
-  const parse = MeetingCreateSchema.safeParse(body)
-  if (!parse.success) return NextResponse.json({ error: parse.error.format() }, { status: 400 })
+    const body = await req.json()
+    const parse = MeetingCreateSchema.safeParse(body)
+    if (!parse.success) return NextResponse.json({ error: parse.error.format() }, { status: 400 })
 
-  const { with: withPerson, date, time, location, address, notes } = parse.data
+    const { with: withPerson, date, time, location, address, notes } = parse.data
 
-  await connectToDatabase()
-  const created = await Meeting.create({
-    ownerEmail: user.email,
-    with: withPerson,
-    date: new Date(date),
-    time,
-    location,
-    address,
-    notes,
-  })
+    await connectToDatabase()
+    const created = await Meeting.create({
+      ownerEmail: user.email,
+      with: withPerson,
+      date: new Date(date),
+      time,
+      location,
+      address,
+      notes,
+    })
 
-  return NextResponse.json({ meeting: created }, { status: 201 })
+    return NextResponse.json({ meeting: created }, { status: 201 })
+  } catch (e) {
+    captureException(e)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }
 
 export async function DELETE(req: Request) {
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+  try {
+    const user = await getCurrentUser(req)
+    if (!user) {
+      captureMessage('Unauthorized DELETE /api/meetings attempt')
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
 
-  const url = new URL(req.url)
-  const id = url.searchParams.get('id')
-  if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+    const url = new URL(req.url)
+    const id = url.searchParams.get('id')
+    if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
 
-  await connectToDatabase()
-  const deleted = await Meeting.findOneAndDelete({ _id: id, ownerEmail: user.email })
-  if (!deleted) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    await connectToDatabase()
+    const deleted = await Meeting.findOneAndDelete({ _id: id, ownerEmail: user.email })
+    if (!deleted) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  return NextResponse.json({ ok: true })
+    return NextResponse.json({ ok: true })
+  } catch (e) {
+    captureException(e)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }

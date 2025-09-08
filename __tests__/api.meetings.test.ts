@@ -15,7 +15,7 @@ describe('Meetings API (route handlers) - unit (mocked DB)', () => {
 
   beforeEach(() => {
     createSpy = vi.spyOn(Meeting, 'create').mockImplementation(async (data: any) => ({ _id: 'srvid', ...data }))
-    findSpy = vi.spyOn(Meeting, 'find').mockImplementation(() => ({ sort: () => ({ lean: async () => [{ _id: 'srvid', ownerEmail: mockUser.email, with: 'Alice', date: new Date().toISOString() }] }) }))
+  findSpy = vi.spyOn(Meeting, 'find').mockImplementation((): any => ({ sort: () => ({ lean: async () => [{ _id: 'srvid', ownerEmail: mockUser.email, with: 'Alice', date: new Date().toISOString() }] }) }))
     deleteSpy = vi.spyOn(Meeting, 'findOneAndDelete').mockResolvedValue({ _id: 'srvid' })
   })
 

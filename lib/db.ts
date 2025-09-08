@@ -1,7 +1,7 @@
 
 //lib/db.ts
 import mongoose from "mongoose";
-import type { Collection, Document } from "mongodb";
+import type { Document } from "mongoose";
 import connectToDatabase from "./mongodb";
 
 /**
@@ -9,7 +9,7 @@ import connectToDatabase from "./mongodb";
  */
 export async function getCollection<T extends Document = Document>(
   name: string
-): Promise<Collection<T>> {
+): Promise<any> {
   await connectToDatabase();
 
   const db = mongoose.connection.db;

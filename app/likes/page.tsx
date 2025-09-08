@@ -63,8 +63,8 @@ export default function LikesPage() {
       const data = await res.json()
       if (data.success) {
         // Create a set of mutual match IDs for quick lookup
-        const mutualIds = new Set(data.matches.map((match: any) => match._id))
-        setMutualMatches(mutualIds)
+  const mutualIds = new Set<string>(data.matches.map((match: any) => String(match._id)))
+  setMutualMatches(mutualIds)
       }
     } catch (err) {
       console.error("Failed to fetch mutual matches", err)

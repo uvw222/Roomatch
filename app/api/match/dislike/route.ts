@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server"
 import { getCollection } from "@/lib/db"
 import { requireAuth } from "@/lib/auth"
-import { ObjectId } from "mongodb"
+import mongoose from 'mongoose'
 
 export async function POST(req: Request) {
   try {
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     }
 
     // Validate that target profile exists
-    const targetProfile = await profiles.findOne({ _id: new ObjectId(targetProfileId) })
+  const targetProfile = await profiles.findOne({ _id: new mongoose.Types.ObjectId(targetProfileId) })
     if (!targetProfile) {
       return NextResponse.json({ success: false, error: "Target profile not found" }, { status: 404 })
     }

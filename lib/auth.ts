@@ -44,13 +44,16 @@ export function verifyToken(token: string): JWTPayload | null {
 /**
  * Get current user from request (server-side)
  */
-export async function getCurrentUser(req?: NextRequest): Promise<UserSession | null> {
+export async function getCurrentUser(req?: Request | NextRequest): Promise<UserSession | null> {
   try {
     // Try to get token from Authorization header first
     let token: string | undefined
     
     if (req) {
-      const authHeader = req.headers.get("authorization")
+      // req may be a web Request or NextRequest; both expose headers.get
+      // Use any here to satisfy TypeScript in tests where Request is passed
+      const headers = (req as any).headers
+      const authHeader = headers?.get?.("authorization")
       if (authHeader?.startsWith("Bearer ")) {
         token = authHeader.substring(7)
       }

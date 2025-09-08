@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { getCollection } from "@/lib/db"
 import { requireAuth } from "@/lib/auth"
-import { ObjectId } from "mongodb"
+import mongoose from 'mongoose'
 
 export async function GET() {
   try {
@@ -16,7 +16,7 @@ export async function GET() {
 
     const myIdString = currentUser._id.toString()
     const likedObjectIds = (currentUser.likedProfiles || [])
-      .map((id: string) => new ObjectId(id))
+      .map((id: string) => new mongoose.Types.ObjectId(id))
 
     // Find mutual matches: profiles that I liked AND liked me back
     const mutualMatches = await profiles.find({
@@ -25,7 +25,7 @@ export async function GET() {
     }).toArray()
 
     // Transform the data to include only necessary fields
-    const transformedMatches = mutualMatches.map(profile => ({
+  const transformedMatches = mutualMatches.map((profile: any) => ({
       _id: profile._id.toString(),
       name: profile.name,
       age: profile.age,

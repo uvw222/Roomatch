@@ -1,7 +1,7 @@
 // app/api/messages/mark-read/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getCollection } from "@/lib/db";
-import { ObjectId } from "mongodb";
+import mongoose from 'mongoose';
 import { getSocket } from "@/lib/socket";
 import { requireAuth } from "@/lib/auth";
 
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
   const filter = other
     ? { from: other, to: me, read: false }
     : {
-        _id: { $in: messageIds.map((id: string) => new ObjectId(id)) },
+      _id: { $in: messageIds.map((id: string) => new mongoose.Types.ObjectId(id)) },
         to: me,
       };
 

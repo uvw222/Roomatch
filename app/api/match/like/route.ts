@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server"
 import { getCollection } from "@/lib/db"
 import { requireAuth } from "@/lib/auth"
-import { ObjectId } from "mongodb"
+import mongoose from 'mongoose'
 import { getSocket } from "@/lib/socket"
 
 export async function POST(req: Request) {
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     }
 
     // Validate that target profile exists and is of opposite type
-    const targetProfile = await profiles.findOne({ _id: new ObjectId(targetProfileId) })
+  const targetProfile = await profiles.findOne({ _id: new mongoose.Types.ObjectId(targetProfileId) })
     if (!targetProfile) {
       return NextResponse.json({ success: false, error: "Target profile not found" }, { status: 404 })
     }
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     }
 
     // Add to liked profiles if not already there
-    if (!currentUser.likedProfiles.includes(targetProfileId)) {
+  if (!currentUser.likedProfiles?.includes(targetProfileId)) {
       await profiles.updateOne(
         { email: user.email },
         { $push: { likedProfiles: targetProfileId } }
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     }
 
     // Remove from disliked profiles if it was there
-    if (currentUser.dislikedProfiles?.includes(targetProfileId)) {
+  if (currentUser.dislikedProfiles?.includes(targetProfileId)) {
       await profiles.updateOne(
         { email: user.email },
         { $pull: { dislikedProfiles: targetProfileId } }
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
 
     // Check if this creates a mutual match
     let matchData = null
-    if (targetProfile.likedProfiles?.includes(currentUser._id.toString())) {
+  if (targetProfile.likedProfiles?.includes(currentUser._id.toString())) {
       // It's a mutual match! Send notifications to both users
       const io = getSocket()
       

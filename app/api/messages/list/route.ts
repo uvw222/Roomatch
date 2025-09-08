@@ -48,13 +48,13 @@ export async function GET(req: NextRequest) {
       .find({ email: { $in: contactEmails } })
       .toArray();
     
-    const profileMap = new Map(contactProfiles.map(p => [p.email, p]));
+  const profileMap = new Map(contactProfiles.map((p: any) => [p.email, p]));
 
     // convert to array & sort by lastTime DESC in JS
     const contacts = Object.entries(map)
-      .sort((a, b) => +new Date(b[1].lastTime) - +new Date(a[1].lastTime))
-      .map(([other, info]) => {
-        const profile = profileMap.get(other);
+      .sort((a: any, b: any) => +new Date(b[1].lastTime) - +new Date(a[1].lastTime))
+      .map(([other, info]: [string, any]) => {
+        const profile = profileMap.get(other) as any;
         return {
           _id: other,
           email: other,
@@ -90,7 +90,7 @@ export async function GET(req: NextRequest) {
 
     // sort ascending by timestamp in JS
     convo.sort(
-      (a, b) => +new Date(a.timestamp) - +new Date(b.timestamp),
+      (a: any, b: any) => +new Date(a.timestamp) - +new Date(b.timestamp),
     );
 
     return NextResponse.json({ success: true, messages: convo });

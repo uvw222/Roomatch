@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { getCollection } from "@/lib/db"
 import { requireAuth } from "@/lib/auth"
-import { ObjectId } from "mongodb"
+import mongoose from 'mongoose'
 
 export async function GET() {
   try {
@@ -14,12 +14,12 @@ export async function GET() {
       return NextResponse.json({ success: false, error: "User not found" }, { status: 404 })
     }
 
-    const likedIds = (currentUser.likedProfiles || []).map((id: string) => new ObjectId(id))
+  const likedIds = (currentUser.likedProfiles || []).map((id: string) => new mongoose.Types.ObjectId(id))
 
     const likedProfiles = await profiles.find({ _id: { $in: likedIds } }).toArray()
 
     // Transform the data to include only necessary fields
-    const transformedProfiles = likedProfiles.map(profile => ({
+  const transformedProfiles = likedProfiles.map((profile: any) => ({
       _id: profile._id.toString(),
       name: profile.name,
       age: profile.age,
