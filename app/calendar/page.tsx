@@ -60,10 +60,39 @@ export default function CalendarPage() {
     }
   }, [])
 
+  // Load meetings from localStorage on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const raw = localStorage.getItem('roommatch_meetings_v1')
+      if (!raw) return
+      const parsed: Array<any> = JSON.parse(raw)
+      const restored: Meeting[] = parsed.map((m) => ({
+        ...m,
+        date: new Date(m.date),
+      }))
+      setMeetings(restored)
+    } catch (e) {
+      // ignore parse errors
+      console.warn('Failed to load meetings from localStorage', e)
+    }
+  }, [])
+
+  // Persist meetings to localStorage whenever they change
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const serializable = meetings.map((m) => ({ ...m, date: m.date.toISOString() }))
+      localStorage.setItem('roommatch_meetings_v1', JSON.stringify(serializable))
+    } catch (e) {
+      console.warn('Failed to save meetings to localStorage', e)
+    }
+  }, [meetings])
+
   const handleAddMeeting = () => {
     const meeting = {
-      ...newMeeting,
-      id: meetings.length + 1,
+  ...newMeeting,
+  id: Date.now(), // use timestamp for unique id
     }
 
     setMeetings([...meetings, meeting])
@@ -79,12 +108,20 @@ export default function CalendarPage() {
   }
 
   const convertMeetingToCalendarEvent = (meeting: Meeting): CalendarEvent => {
-    const [hours, minutes] = meeting.time.split(':').map(Number)
+    // Guard against empty or invalid time values
+    let hours = 9
+    let minutes = 0
+    if (meeting.time && meeting.time.includes(':')) {
+      const parsed = meeting.time.split(':').map(Number)
+      if (!Number.isNaN(parsed[0])) hours = parsed[0]
+      if (!Number.isNaN(parsed[1])) minutes = parsed[1]
+    }
+
     const startDate = new Date(meeting.date)
     startDate.setHours(hours, minutes, 0, 0)
-    
+
     const endDate = new Date(startDate)
-    endDate.setHours(hours + 1, minutes, 0, 0) // Default 1 hour duration
+    endDate.setHours(startDate.getHours() + 1, minutes, 0, 0) // Default 1 hour duration
 
     return {
       title: `Meeting with ${meeting.with}`,
@@ -94,6 +131,10 @@ export default function CalendarPage() {
       location: `${meeting.location} - ${meeting.address}`,
       attendees: [userEmail, meeting.with].filter(Boolean)
     }
+  }
+
+  const handleCancelMeeting = (id: number) => {
+    setMeetings((prev) => prev.filter((m) => m.id !== id))
   }
 
   const filteredMeetings = date
@@ -320,7 +361,13 @@ export default function CalendarPage() {
                             <Edit3 className="h-4 w-4 mr-2" />
                             Reschedule
                           </Button>
-                          <Button variant="outline" size="sm" className="text-red-500 hover:text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 transition-all duration-200">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCancelMeeting(meeting.id)}
+                            aria-label={`Cancel meeting with ${meeting.with}`}
+                            className="text-red-500 hover:text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 transition-all duration-200"
+                          >
                             <Trash2 className="h-4 w-4 mr-2" />
                             Cancel
                           </Button>
