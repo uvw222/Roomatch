@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { MessageCircle, Calendar, User, Home, Heart, TrendingUp, Users, Clock, ArrowRight, Plus, Edit3 } from "lucide-react"
@@ -12,6 +13,37 @@ export default function DashboardPage() {
   const { user } = useAuth()
   const { profile, isLoading: profileLoading } = useProfile()
   const { unreadCount } = useUnreadMessages()
+  const [matchCount, setMatchCount] = useState(0)
+  const [isLoadingMatches, setIsLoadingMatches] = useState(true)
+
+  // Fetch actual mutual matches count
+  useEffect(() => {
+    const fetchMatches = async () => {
+      try {
+        setIsLoadingMatches(true)
+        const res = await fetch('/api/matches/mutual', {
+          credentials: 'include'
+        })
+        const data = await res.json()
+        
+        if (data.success) {
+          setMatchCount(data.matches.length)
+        } else {
+          console.error('Failed to fetch matches:', data.error)
+          setMatchCount(0)
+        }
+      } catch (error) {
+        console.error('Error fetching matches:', error)
+        setMatchCount(0)
+      } finally {
+        setIsLoadingMatches(false)
+      }
+    }
+
+    if (user && profile) {
+      fetchMatches()
+    }
+  }, [user, profile])
 
   if (profileLoading || !profile) {
     return (
@@ -28,7 +60,6 @@ export default function DashboardPage() {
     )
   }
 
-  const matchCount = profile.likedProfiles?.length || 0
   return (
     <div className="page-content">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 md:py-12">
