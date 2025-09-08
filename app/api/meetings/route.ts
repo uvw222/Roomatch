@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCollection } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { createMeetingRequestNotification } from "@/lib/notificationHelpers";
 
 // GET - List meetings for the authenticated user
 export async function GET(request: NextRequest) {
@@ -143,8 +144,23 @@ export async function POST(request: NextRequest) {
       ...meetingData
     };
 
+    // Create notification for the participant
+    await createMeetingRequestNotification(
+      participantEmail,
+      {
+        email: user.email,
+        name: user.name,
+        profileImage: (await profiles.findOne({ email: user.email }))?.profileImage
+      },
+      {
+        date: new Date(date),
+        time,
+        locationType,
+        meetingId: result.insertedId.toString()
+      }
+    );
 
-    // TODO: Send real-time notification to participant
+    // TODO: Send real-time notification via socket
     // Will be implemented with socket integration
 
     return NextResponse.json({

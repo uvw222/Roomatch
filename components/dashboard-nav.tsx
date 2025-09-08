@@ -13,13 +13,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Calendar, Heart, Home, LogOut, Menu, MessageCircle, Settings, User, Edit, Users, Sparkles } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useProfileImage } from "@/hooks/useProfile"
 import { useAuth } from "@/hooks/useAuth"
 import { useUnreadMessages } from "@/hooks/useUnreadMessages"
 import { getSocketClient } from "@/lib/socketClient"
+import NotificationBell from "@/components/NotificationBell"
 
 export default function DashboardNav() {
   const pathname = usePathname()
@@ -100,6 +101,7 @@ export default function DashboardNav() {
               </div>
             )}
           </div>
+          <NotificationBell />
           <ThemeToggle />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -171,11 +173,15 @@ export default function DashboardNav() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right">
+              <SheetHeader>
+                <SheetTitle>
+                  <Link href="/" className="flex items-center gap-2 font-bold text-xl hover:text-orange-600 transition-colors">
+                    <Home className="h-5 w-5 text-orange-500" />
+                    <span>RoomMatch</span>
+                  </Link>
+                </SheetTitle>
+              </SheetHeader>
               <div className="flex flex-col gap-6 py-6">
-                <Link href="/" className="flex items-center gap-2 font-bold text-xl hover:text-orange-600 transition-colors">
-                  <Home className="h-5 w-5 text-orange-500" />
-                  <span>RoomMatch</span>
-                </Link>
                 <nav className="flex flex-col gap-4">
                   {routes.map((route) => (
                     <Link

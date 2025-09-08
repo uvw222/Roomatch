@@ -71,7 +71,7 @@ type NewMeeting = {
 
 export default function MatchesPage() {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, isLoading: authLoading } = useAuth()
   const [matches, setMatches] = useState<Match[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -91,12 +91,18 @@ export default function MatchesPage() {
 
 
   useEffect(() => {
+    // Don't redirect while auth is still loading
+    if (authLoading) {
+      return
+    }
+    
     if (!user) {
       router.push('/login')
       return
     }
+    
     fetchMatches()
-  }, [user, router])
+  }, [user, authLoading, router])
 
   const fetchMatches = async () => {
     try {
@@ -206,7 +212,7 @@ export default function MatchesPage() {
     return { text: 'Fair Compatibility', color: 'bg-yellow-100 text-yellow-800' }
   }
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="page-content pt-safe pb-safe">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

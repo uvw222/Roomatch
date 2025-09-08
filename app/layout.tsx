@@ -9,6 +9,7 @@ import CurrentLocationDetector from "@/components/CurrentLocationDetector"
 import { ProfileProvider } from "@/hooks/useProfile"
 import { AuthProvider } from "@/hooks/useAuth"
 import { UnreadMessagesProvider } from "@/hooks/useUnreadMessages"
+import { NotificationsProvider } from "@/hooks/useNotifications"
 import GlobalMatchNotification from "@/components/GlobalMatchNotification"
 import NotificationSound from "@/components/notification-sound"
 import { Toaster } from "@/components/ui/sonner"
@@ -58,12 +59,14 @@ export default function RootLayout({
           <AuthProvider>
             <ProfileProvider>
               <UnreadMessagesProvider>
-                <ViewportHandler />
-                <CurrentLocationDetector />
-                <LayoutShell>{children}</LayoutShell>
-                <GlobalMatchNotification />
-                <NotificationSound />
-                <Toaster />
+                <NotificationsProvider>
+                  <ViewportHandler />
+                  <CurrentLocationDetector />
+                  <LayoutShell>{children}</LayoutShell>
+                  <GlobalMatchNotification />
+                  <NotificationSound />
+                  <Toaster />
+                </NotificationsProvider>
               </UnreadMessagesProvider>
             </ProfileProvider>
           </AuthProvider>

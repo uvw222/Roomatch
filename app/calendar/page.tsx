@@ -49,7 +49,7 @@ type Meeting = {
 }
 
 export default function CalendarPage() {
-  const { user } = useAuth()
+  const { user, isLoading: authLoading } = useAuth()
   const router = useRouter()
   const [date, setDate] = useState<Date | undefined>(new Date())
   const [meetings, setMeetings] = useState<Meeting[]>([])
@@ -69,12 +69,18 @@ export default function CalendarPage() {
 
   // Check authentication and fetch meetings
   useEffect(() => {
+    // Don't redirect while auth is still loading
+    if (authLoading) {
+      return
+    }
+    
     if (!user) {
       router.push('/login')
       return
     }
+    
     fetchMeetings()
-  }, [user, router])
+  }, [user, authLoading, router])
 
   const fetchMeetings = async () => {
     try {
@@ -275,7 +281,7 @@ export default function CalendarPage() {
       )
     : []
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="flex flex-col h-full pt-safe pb-safe">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex-1 flex items-center justify-center">

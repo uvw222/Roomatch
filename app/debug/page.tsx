@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import NotificationTestHelper from '@/components/NotificationTestHelper'
 
 export default function DebugPage() {
   const [targetEmail, setTargetEmail] = useState('')
@@ -96,6 +97,8 @@ export default function DebugPage() {
           )}
         </CardContent>
       </Card>
+      
+      <NotificationTestHelper />
     </div>
   )
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCollection } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { ObjectId } from "mongodb";
+import { createMeetingApprovedNotification, createMeetingDeclinedNotification } from "@/lib/notificationHelpers";
 
 // GET - Get specific meeting
 export async function GET(
@@ -112,6 +113,24 @@ export async function PUT(
         updateData.participantConfirmed = true;
         // Since requester auto-confirms when creating, set status to confirmed
         updateData.status = 'confirmed';
+        
+        // Create notification for the requester
+        const profiles = await getCollection("profiles");
+        const participantProfile = await profiles.findOne({ email: user.email });
+        
+        await createMeetingApprovedNotification(
+          meeting.requesterEmail,
+          {
+            email: user.email,
+            name: user.name,
+            profileImage: participantProfile?.profileImage
+          },
+          {
+            date: meeting.date,
+            time: meeting.time,
+            locationType: meeting.locationType
+          }
+        );
       } else if (meeting.requesterEmail === user.email) {
         // If requester is confirming (shouldn't normally happen since they auto-confirm)
         updateData.requesterConfirmed = true;
@@ -237,7 +256,29 @@ export async function DELETE(
       }
     );
 
-    // TODO: Send real-time notification to other participant
+    // Create notification for the other participant
+    const otherUserEmail = meeting.requesterEmail === user.email 
+      ? meeting.participantEmail 
+      : meeting.requesterEmail;
+    
+    const profiles = await getCollection("profiles");
+    const cancellerProfile = await profiles.findOne({ email: user.email });
+    
+    await createMeetingDeclinedNotification(
+      otherUserEmail,
+      {
+        email: user.email,
+        name: user.name,
+        profileImage: cancellerProfile?.profileImage
+      },
+      {
+        date: meeting.date,
+        time: meeting.time,
+        locationType: meeting.locationType
+      }
+    );
+
+    // TODO: Send real-time notification via socket
     // Will be implemented with socket integration
 
     return NextResponse.json({

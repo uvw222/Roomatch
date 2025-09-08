@@ -32,33 +32,53 @@ type Meeting = {
   updatedAt: Date
 }
 
+type Match = {
+  _id: string
+  email: string
+  name: string
+  age?: number
+  userType: string
+  profileImage?: string
+  location?: string
+  bio?: string
+  occupation?: string
+  lastMessage?: string
+  lastMessageTime?: Date
+  unreadCount?: number
+}
+
 export default function DashboardPage() {
   const { user } = useAuth()
   const { profile, isLoading: profileLoading } = useProfile()
   const { unreadCount } = useUnreadMessages()
   const [matchCount, setMatchCount] = useState(0)
+  const [matches, setMatches] = useState<Match[]>([])
   const [isLoadingMatches, setIsLoadingMatches] = useState(true)
   const [meetings, setMeetings] = useState<Meeting[]>([])
   const [isLoadingMeetings, setIsLoadingMeetings] = useState(true)
 
-  // Fetch actual mutual matches count
+  // Fetch actual mutual matches
   useEffect(() => {
     const fetchMatches = async () => {
       try {
         setIsLoadingMatches(true)
-        const res = await fetch('/api/matches/mutual', {
+        // Use the chat/matches API to get full match data with message info
+        const res = await fetch('/api/chat/matches', {
           credentials: 'include'
         })
         const data = await res.json()
         
         if (data.success) {
-          setMatchCount(data.matches.length)
+          setMatches(data.matches || [])
+          setMatchCount(data.matches?.length || 0)
         } else {
           console.error('Failed to fetch matches:', data.error)
+          setMatches([])
           setMatchCount(0)
         }
       } catch (error) {
         console.error('Error fetching matches:', error)
+        setMatches([])
         setMatchCount(0)
       } finally {
         setIsLoadingMatches(false)
@@ -247,7 +267,12 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
                 <div className="space-y-3 sm:space-y-4">
-                  {matchCount === 0 ? (
+                  {isLoadingMatches ? (
+                    <div className="text-center py-8">
+                      <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                      <p className="text-sm text-slate-600">Loading matches...</p>
+                    </div>
+                  ) : matchCount === 0 ? (
                     <div className="text-center py-8 sm:py-12 border-2 border-dashed border-slate-200 rounded-xl bg-gradient-to-br from-slate-50 to-blue-50">
                       <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-orange-100 to-red-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                         <Heart className="h-6 w-6 sm:h-8 sm:w-8 text-orange-500" />
@@ -262,18 +287,81 @@ export default function DashboardPage() {
                       </Link>
                     </div>
                   ) : (
-                    <div className="text-center py-6 sm:py-8">
-                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                        <Users className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
-                      </div>
-                      <h3 className="text-base sm:text-lg font-semibold text-slate-800 mb-2">You have {matchCount} match{matchCount !== 1 ? 'es' : ''}!</h3>
-                      <p className="text-sm sm:text-base text-slate-600 mb-3 sm:mb-4 px-2">Check your matches page to see them</p>
-                      <Link href="/matches">
-                        <Button size="sm" variant="outline" className="border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200">
-                          View Matches
-                          <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-2" />
-                        </Button>
-                      </Link>
+                    <div className="space-y-3">
+                      {matches.slice(0, 3).map((match) => (
+                        <div key={match._id} className="flex items-center gap-3 p-3 bg-white rounded-lg border border-slate-200 hover:border-orange-200 hover:shadow-md transition-all duration-200">
+                          <div className="relative w-12 h-12 flex-shrink-0">
+                            {match.profileImage ? (
+                              <img 
+                                src={match.profileImage} 
+                                alt={match.name}
+                                className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-red-100 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                                <User className="h-6 w-6 text-orange-600" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-semibold text-slate-800 truncate">{match.name}</h4>
+                              <Badge variant="secondary" className="text-xs">
+                                {match.userType === 'renter' ? '🏠 Renter' : '🏢 Landlord'}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-1 text-sm text-slate-600">
+                              {match.age && <span>Age {match.age}</span>}
+                              {match.age && match.location && <span>•</span>}
+                              {match.location && (
+                                <div className="flex items-center gap-1">
+                                  <MapPin className="h-3 w-3" />
+                                  <span className="truncate">{match.location}</span>
+                                </div>
+                              )}
+                            </div>
+                            {match.lastMessage && (
+                              <p className="text-xs text-slate-500 truncate mt-1">
+                                Last: {match.lastMessage}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {match.unreadCount && match.unreadCount > 0 && (
+                              <Badge className="bg-red-500 text-white text-xs">
+                                {match.unreadCount}
+                              </Badge>
+                            )}
+                            <Link href={`/chat?other=${match.email}`}>
+                              <Button size="sm" variant="outline" className="h-8 w-8 p-0">
+                                <MessageCircle className="h-4 w-4" />
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {matchCount > 3 && (
+                        <div className="text-center pt-2">
+                          <Link href="/matches">
+                            <Button size="sm" variant="outline" className="border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200">
+                              View All {matchCount} Matches
+                              <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-2" />
+                            </Button>
+                          </Link>
+                        </div>
+                      )}
+                      
+                      {matchCount <= 3 && matchCount > 0 && (
+                        <div className="text-center pt-2">
+                          <Link href="/matches">
+                            <Button size="sm" variant="outline" className="border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200">
+                              View All Matches
+                              <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-2" />
+                            </Button>
+                          </Link>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

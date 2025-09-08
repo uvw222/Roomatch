@@ -4,6 +4,7 @@ import { getCollection } from "@/lib/db"
 import { requireAuth } from "@/lib/auth"
 import { ObjectId } from "mongodb"
 import { getSocket } from "@/lib/socket"
+import { createMatchNotification } from "@/lib/notificationHelpers"
 
 export async function POST(req: Request) {
   try {
@@ -87,6 +88,25 @@ export async function POST(req: Request) {
           } 
         } as any
       )
+
+      // Create new notifications for both users
+      await createMatchNotification(
+        user.email,
+        {
+          email: targetProfile.email,
+          name: targetProfile.name,
+          profileImage: targetProfile.profileImage
+        }
+      );
+
+      await createMatchNotification(
+        targetProfile.email,
+        {
+          email: currentUser.email,
+          name: currentUser.name,
+          profileImage: currentUser.profileImage
+        }
+      );
 
       // Prepare match data for response
       matchData = {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -9,14 +9,19 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar as CalendarComponent } from "@/components/ui/calendar"
+import { format } from "date-fns"
 import { Upload, X, User, Save, ArrowLeft, Camera, MapPin, Briefcase, Calendar, FileText, Home, DollarSign, Clock, Shield, Settings, Plus, Image as ImageIcon } from "lucide-react"
 import LocationPicker from "@/components/LocationPicker"
 import { useProfile } from "../../../hooks/useProfile"
 import Link from "next/link"
+import { toast } from "sonner"
 
 type Profile = {
   name: string
   age: number
+  birthdate?: Date
   occupation: string
   location: string
   coordinates?: {
@@ -78,11 +83,29 @@ type Profile = {
   }
 }
 
+// Function to calculate age from birthdate
+const calculateAge = (birthdate: Date): number => {
+  const today = new Date()
+  const birthYear = birthdate.getFullYear()
+  const birthMonth = birthdate.getMonth()
+  const birthDay = birthdate.getDate()
+  
+  let age = today.getFullYear() - birthYear
+  
+  // Check if birthday hasn't occurred this year yet
+  if (today.getMonth() < birthMonth || (today.getMonth() === birthMonth && today.getDate() < birthDay)) {
+    age--
+  }
+  
+  return age
+}
+
 export default function EditProfilePage() {
   const { profile: globalProfile, isLoading: profileLoading } = useProfile()
   const [profile, setProfile] = useState<Profile>({
     name: "",
     age: 0,
+    birthdate: undefined,
     occupation: "",
     location: "",
     coordinates: undefined,
@@ -153,9 +176,17 @@ export default function EditProfilePage() {
       if (globalProfile && globalProfile.name) {
         // Existing user with profile data
         setIsNewUser(false)
+        // Calculate birthdate from age if available
+        const birthdate = globalProfile.birthdate 
+          ? new Date(globalProfile.birthdate)
+          : globalProfile.age > 0 
+            ? new Date(new Date().getFullYear() - globalProfile.age, 0, 1)
+            : undefined
+        
         setProfile({
           name: globalProfile.name ?? "",
           age: globalProfile.age ?? 0,
+          birthdate: birthdate,
           occupation: globalProfile.occupation ?? "",
           location: globalProfile.location ?? "",
           coordinates: globalProfile.coordinates,
@@ -237,6 +268,7 @@ export default function EditProfilePage() {
         setProfile({
           name: "",
           age: 0,
+          birthdate: undefined,
           occupation: "",
           location: "",
           coordinates: undefined,
@@ -280,6 +312,49 @@ export default function EditProfilePage() {
     }
   }
 
+  const handleBirthdateChange = (date: Date | undefined) => {
+    if (date) {
+      const age = calculateAge(date)
+      setProfile(prev => ({ 
+        ...prev, 
+        birthdate: date,
+        age: age
+      }))
+      
+      // Clear age error when birthdate is selected
+      if (errors.age) {
+        setErrors(prev => ({ ...prev, age: "" }))
+      }
+    }
+    
+    // Clear success message when user makes changes
+    if (successMessage) {
+      setSuccessMessage("")
+    }
+  }
+
+  // Memoized callback for location selection to prevent LocationPicker re-renders
+  const handleLocationSelect = useCallback((location: string, latitude: number, longitude: number) => {
+    console.log('LocationPicker selected:', { location, latitude, longitude })
+    setProfile(prev => ({
+      ...prev,
+      location,
+      coordinates: { latitude, longitude }
+    }))
+    // Clear location error when location is selected
+    if (errors.location) {
+      setErrors(prev => ({ ...prev, location: "" }))
+    }
+  }, [errors.location])
+
+  // Memoized location picker props to prevent unnecessary re-renders
+  const locationPickerProps = useMemo(() => ({
+    onLocationSelect: handleLocationSelect,
+    initialLocation: profile.location,
+    initialLatitude: profile.coordinates?.latitude,
+    initialLongitude: profile.coordinates?.longitude,
+  }), [handleLocationSelect, profile.location, profile.coordinates?.latitude, profile.coordinates?.longitude])
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
@@ -321,12 +396,15 @@ export default function EditProfilePage() {
       newErrors.name = "Name must be less than 50 characters"
     }
 
-    if (!profile.age || Number(profile.age) <= 0) {
-      newErrors.age = "Age must be greater than 0"
-    } else if (Number(profile.age) < 18) {
-      newErrors.age = "You must be at least 18 years old"
-    } else if (Number(profile.age) > 120) {
-      newErrors.age = "Please enter a valid age"
+    if (!profile.birthdate) {
+      newErrors.age = "Date of birth is required"
+    } else {
+      const age = calculateAge(profile.birthdate)
+      if (age < 18) {
+        newErrors.age = "You must be at least 18 years old"
+      } else if (age > 120) {
+        newErrors.age = "Please enter a valid birth date"
+      }
     }
 
     if (!profile.occupation.trim()) {
@@ -359,6 +437,9 @@ export default function EditProfilePage() {
       const formData = new FormData()
       formData.append("name", profile.name.trim())
       formData.append("age", String(profile.age))
+      if (profile.birthdate) {
+        formData.append("birthdate", profile.birthdate.toISOString())
+      }
       formData.append("occupation", profile.occupation.trim())
       formData.append("location", profile.location.trim())
       formData.append("bio", profile.bio.trim())
@@ -387,17 +468,21 @@ export default function EditProfilePage() {
 
       const data = await res.json()
       if (data.success) {
-        setSuccessMessage("Profile updated successfully!")
+        toast.success("Profile Updated! ✅", {
+          description: "Your profile has been successfully updated.",
+        })
         // Refresh the profile image in the header
         refreshProfile()
         setTimeout(() => {
           router.push("/dashboard")
         }, 1500)
       } else {
-        setErrors({ submit: data.message || "Error updating profile" })
+        toast.error("Failed to Update Profile", {
+          description: data.message || "Something went wrong. Please try again.",
+        })
       }
     } catch (error) {
-      setErrors({ submit: "Network error. Please try again." })
+      toast.error("Network error. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
@@ -545,21 +630,32 @@ export default function EditProfilePage() {
               </div>
 
               <div>
-                <Label htmlFor="age" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                <Label htmlFor="birthdate" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
-                  Age *
+                  Date of Birth * {profile.age > 0 && <span className="text-slate-500 text-xs">(Age: {profile.age})</span>}
                 </Label>
-                <Input
-                  id="age"
-                  name="age"
-                  type="number"
-                  min="18"
-                  max="120"
-                  value={profile.age}
-                  onChange={handleChange}
-                  placeholder="Enter your age (18+)"
-                  className={`mt-2 h-12 border-slate-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200 ${errors.age ? "border-red-500" : ""}`}
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={`mt-2 h-12 w-full justify-start text-left font-normal border-slate-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200 ${!profile.birthdate ? "text-muted-foreground" : ""} ${errors.age ? "border-red-500" : ""}`}
+                    >
+                      <Calendar className="mr-2 h-4 w-4" />
+                      {profile.birthdate ? format(profile.birthdate, "PPP") : "Select your birth date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      mode="single"
+                      selected={profile.birthdate}
+                      onSelect={handleBirthdateChange}
+                      disabled={(date) => 
+                        date > new Date() || date < new Date("1900-01-01")
+                      }
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
                 {errors.age && <p className="text-red-500 text-sm mt-1">{errors.age}</p>}
               </div>
 
@@ -609,23 +705,7 @@ export default function EditProfilePage() {
                     )}
                   </div>
                 )}
-                <LocationPicker
-                  onLocationSelect={(location: string, latitude: number, longitude: number) => {
-                    console.log('LocationPicker selected:', { location, latitude, longitude })
-                    setProfile(prev => ({
-                      ...prev,
-                      location,
-                      coordinates: { latitude, longitude }
-                    }))
-                    // Clear location error when location is selected
-                    if (errors.location) {
-                      setErrors(prev => ({ ...prev, location: "" }))
-                    }
-                  }}
-                  initialLocation={profile.location}
-                  initialLatitude={profile.coordinates?.latitude}
-                  initialLongitude={profile.coordinates?.longitude}
-                />
+                <LocationPicker {...locationPickerProps} />
                 {errors.location && <p className="text-red-500 text-sm mt-2">{errors.location}</p>}
               </CardContent>
             </Card>

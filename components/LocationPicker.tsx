@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, memo } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { MapPin, Search } from 'lucide-react'
@@ -13,7 +13,7 @@ interface LocationPickerProps {
   initialLongitude?: number
 }
 
-export default function LocationPicker({ 
+const LocationPicker = memo(function LocationPicker({ 
   onLocationSelect, 
   initialLocation = "", 
   initialLatitude, 
@@ -252,4 +252,6 @@ export default function LocationPicker({
       </p>
     </div>
   )
-}
+})
+
+export default LocationPicker
