@@ -79,7 +79,7 @@ export default function CalendarPage() {
   }
 
   const convertMeetingToCalendarEvent = (meeting: Meeting): CalendarEvent => {
-    const [hours, minutes] = meeting.time.split(':').map(Number)
+    const t = (typeof meeting.time === 'string' && /^\d{1,2}:\d{2}$/.test(meeting.time) ? meeting.time : '09:00'); const [hours, minutes] = t.split(':').map(Number)
     const startDate = new Date(meeting.date)
     startDate.setHours(hours, minutes, 0, 0)
     
@@ -99,9 +99,7 @@ export default function CalendarPage() {
   const filteredMeetings = date
     ? meetings.filter(
         (meeting) =>
-          meeting.date.getDate() === date.getDate() &&
-          meeting.date.getMonth() === date.getMonth() &&
-          meeting.date.getFullYear() === date.getFullYear(),
+          meeting.date.toDateString() === date.toDateString()
       )
     : []
 
@@ -400,4 +398,5 @@ export default function CalendarPage() {
     </div>
   )
 }
+
 
