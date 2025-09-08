@@ -64,14 +64,10 @@ export default function CalendarPage() {
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    const storedEmail = localStorage.getItem('userEmail') ||
-      document.cookie.split('; ').find(row => row.startsWith('user_email='))?.split('=')[1]
-
-    // Try loading from server first
+    // Try loading from server first (authenticated request)
     const loadFromServer = async () => {
-      if (!storedEmail) return
       try {
-        const res = await fetch(`/api/meetings?user_email=${encodeURIComponent(storedEmail)}`)
+        const res = await fetch(`/api/meetings`, { credentials: 'same-origin' })
         if (!res.ok) throw new Error('server error')
         const data = await res.json()
         const restored: Meeting[] = (data.meetings || []).map((m: any) => ({ ...m, date: new Date(m.date), id: m._id }))
@@ -121,14 +117,11 @@ export default function CalendarPage() {
     setNewMeeting({ date: new Date(), time: "", location: "", address: "", with: "", notes: "" })
 
     // Post to server
-    const storedEmail = localStorage.getItem('userEmail') ||
-      document.cookie.split('; ').find(row => row.startsWith('user_email='))?.split('=')[1]
-
     ;(async () => {
-      if (!storedEmail) return
       try {
-        const res = await fetch(`/api/meetings?user_email=${encodeURIComponent(storedEmail)}`, {
+        const res = await fetch(`/api/meetings`, {
           method: 'POST',
+          credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             with: meeting.with,
@@ -179,19 +172,13 @@ export default function CalendarPage() {
     const meetingToCancel = meetings.find((m) => m.id === id)
     setMeetings((prev) => prev.filter((m) => m.id !== id))
 
-    const storedEmail = localStorage.getItem('userEmail') ||
-      document.cookie.split('; ').find(row => row.startsWith('user_email='))?.split('=')[1]
-
     ;(async () => {
-      if (!storedEmail || !meetingToCancel) return
+      if (!meetingToCancel) return
       try {
-        // Delete by server id if present (string), otherwise try to match by date/time
+        // Delete by server id if present (string)
         const serverId = typeof meetingToCancel.id === 'string' ? meetingToCancel.id : null
-        const url = serverId
-          ? `/api/meetings?id=${encodeURIComponent(serverId)}&user_email=${encodeURIComponent(storedEmail)}`
-          : `/api/meetings?user_email=${encodeURIComponent(storedEmail)}`
-
-        const res = await fetch(url, { method: 'DELETE' })
+        const url = serverId ? `/api/meetings?id=${encodeURIComponent(serverId)}` : `/api/meetings`
+        const res = await fetch(url, { method: 'DELETE', credentials: 'same-origin' })
         if (!res.ok) throw new Error('server delete failed')
       } catch (e) {
         console.warn('Failed to delete meeting on server', e)
