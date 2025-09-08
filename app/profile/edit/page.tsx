@@ -553,9 +553,11 @@ export default function EditProfilePage() {
                   id="age"
                   name="age"
                   type="number"
+                  min="18"
+                  max="120"
                   value={profile.age}
                   onChange={handleChange}
-                  placeholder="Enter your age"
+                  placeholder="Enter your age (18+)"
                   className={`mt-2 h-12 border-slate-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200 ${errors.age ? "border-red-500" : ""}`}
                 />
                 {errors.age && <p className="text-red-500 text-sm mt-1">{errors.age}</p>}
