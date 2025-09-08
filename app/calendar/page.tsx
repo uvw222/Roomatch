@@ -63,19 +63,41 @@ export default function CalendarPage() {
   // Load meetings from localStorage on mount
   useEffect(() => {
     if (typeof window === 'undefined') return
-    try {
-      const raw = localStorage.getItem('roommatch_meetings_v1')
-      if (!raw) return
-      const parsed: Array<any> = JSON.parse(raw)
-      const restored: Meeting[] = parsed.map((m) => ({
-        ...m,
-        date: new Date(m.date),
-      }))
-      setMeetings(restored)
-    } catch (e) {
-      // ignore parse errors
-      console.warn('Failed to load meetings from localStorage', e)
+
+    const storedEmail = localStorage.getItem('userEmail') ||
+      document.cookie.split('; ').find(row => row.startsWith('user_email='))?.split('=')[1]
+
+    // Try loading from server first
+    const loadFromServer = async () => {
+      if (!storedEmail) return
+      try {
+        const res = await fetch(`/api/meetings?user_email=${encodeURIComponent(storedEmail)}`)
+        if (!res.ok) throw new Error('server error')
+        const data = await res.json()
+        const restored: Meeting[] = (data.meetings || []).map((m: any) => ({ ...m, date: new Date(m.date), id: m._id }))
+        setMeetings(restored)
+        return
+      } catch (e) {
+        // fallback to localStorage below
+        console.warn('Failed to load meetings from server, falling back to localStorage', e)
+      }
     }
+
+    loadFromServer().then(() => {
+      try {
+        const raw = localStorage.getItem('roommatch_meetings_v1')
+        if (!raw) return
+        const parsed: Array<any> = JSON.parse(raw)
+        const restored: Meeting[] = parsed.map((m) => ({
+          ...m,
+          date: new Date(m.date),
+        }))
+        // only set if not already loaded from server
+        setMeetings((prev) => (prev.length ? prev : restored))
+      } catch (e) {
+        // ignore parse errors
+      }
+    })
   }, [])
 
   // Persist meetings to localStorage whenever they change
@@ -90,21 +112,41 @@ export default function CalendarPage() {
   }, [meetings])
 
   const handleAddMeeting = () => {
-    const meeting = {
-  ...newMeeting,
-  id: Date.now(), // use timestamp for unique id
-    }
+    const localId = Date.now()
+    const meeting = { ...newMeeting, id: localId }
 
+    // Optimistic UI update
     setMeetings([...meetings, meeting])
     setIsDialogOpen(false)
-    setNewMeeting({
-      date: new Date(),
-      time: "",
-      location: "",
-      address: "",
-      with: "",
-      notes: "",
-    })
+    setNewMeeting({ date: new Date(), time: "", location: "", address: "", with: "", notes: "" })
+
+    // Post to server
+    const storedEmail = localStorage.getItem('userEmail') ||
+      document.cookie.split('; ').find(row => row.startsWith('user_email='))?.split('=')[1]
+
+    ;(async () => {
+      if (!storedEmail) return
+      try {
+        const res = await fetch(`/api/meetings?user_email=${encodeURIComponent(storedEmail)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            with: meeting.with,
+            date: meeting.date.toISOString(),
+            time: meeting.time,
+            location: meeting.location,
+            address: meeting.address,
+            notes: meeting.notes,
+          }),
+        })
+        if (!res.ok) throw new Error('Failed to create on server')
+        const data = await res.json()
+        // Replace local optimistic id with server id
+        setMeetings((prev) => prev.map((m) => (m.id === localId ? { ...m, id: data.meeting._id } : m)))
+      } catch (e) {
+        console.warn('Failed to persist meeting to server', e)
+      }
+    })()
   }
 
   const convertMeetingToCalendarEvent = (meeting: Meeting): CalendarEvent => {
@@ -134,7 +176,27 @@ export default function CalendarPage() {
   }
 
   const handleCancelMeeting = (id: number) => {
+    const meetingToCancel = meetings.find((m) => m.id === id)
     setMeetings((prev) => prev.filter((m) => m.id !== id))
+
+    const storedEmail = localStorage.getItem('userEmail') ||
+      document.cookie.split('; ').find(row => row.startsWith('user_email='))?.split('=')[1]
+
+    ;(async () => {
+      if (!storedEmail || !meetingToCancel) return
+      try {
+        // Delete by server id if present (string), otherwise try to match by date/time
+        const serverId = typeof meetingToCancel.id === 'string' ? meetingToCancel.id : null
+        const url = serverId
+          ? `/api/meetings?id=${encodeURIComponent(serverId)}&user_email=${encodeURIComponent(storedEmail)}`
+          : `/api/meetings?user_email=${encodeURIComponent(storedEmail)}`
+
+        const res = await fetch(url, { method: 'DELETE' })
+        if (!res.ok) throw new Error('server delete failed')
+      } catch (e) {
+        console.warn('Failed to delete meeting on server', e)
+      }
+    })()
   }
 
   const filteredMeetings = date
