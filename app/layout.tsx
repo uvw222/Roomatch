@@ -11,6 +11,7 @@ import { AuthProvider } from "@/hooks/useAuth"
 import { UnreadMessagesProvider } from "@/hooks/useUnreadMessages"
 import GlobalMatchNotification from "@/components/GlobalMatchNotification"
 import NotificationSound from "@/components/notification-sound"
+import { Toaster } from "@/components/ui/sonner"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
@@ -62,6 +63,7 @@ export default function RootLayout({
                 <LayoutShell>{children}</LayoutShell>
                 <GlobalMatchNotification />
                 <NotificationSound />
+                <Toaster />
               </UnreadMessagesProvider>
             </ProfileProvider>
           </AuthProvider>

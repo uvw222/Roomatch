@@ -27,6 +27,7 @@ import {
   AlertTriangle
 } from "lucide-react"
 import Link from "next/link"
+import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { ThemeToggle } from "@/components/theme-toggle"
 
@@ -137,13 +138,17 @@ export default function SettingsPage() {
 
       if (res.ok) {
         // Show success message
-        alert("Settings saved successfully!")
+        toast.success("Settings Saved! ✅", {
+          description: "Your settings have been successfully updated.",
+        })
       } else {
-        alert("Failed to save settings")
+        toast.error("Failed to Save Settings", {
+          description: "Something went wrong. Please try again.",
+        })
       }
     } catch (error) {
       console.error("Error saving settings:", error)
-      alert("Error saving settings")
+      toast.error("Error saving settings. Please check your connection.")
     } finally {
       setIsSaving(false)
     }

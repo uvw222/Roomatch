@@ -1,8 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useAuth } from "@/hooks/useAuth"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
   DialogContent,
@@ -22,60 +25,143 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns"
 import AddToCalendarButton from "@/components/AddToCalendarButton"
 import { CalendarEvent } from "@/lib/calendarIntegration"
+import { toast } from "sonner"
 
 type Meeting = {
-  id: number
+  _id: string
+  requesterEmail: string
+  participantEmail: string
+  requesterName: string
+  participantName: string
+  title?: string
+  description?: string
+  notes: string
   date: Date
   time: string
-  location: string
+  duration?: number
+  locationType: string
   address: string
-  with: string
-  notes: string
+  status: "pending" | "confirmed" | "cancelled" | "completed"
+  requesterConfirmed: boolean
+  participantConfirmed: boolean
+  createdAt: Date
+  updatedAt: Date
 }
 
 export default function CalendarPage() {
+  const { user } = useAuth()
+  const router = useRouter()
   const [date, setDate] = useState<Date | undefined>(new Date())
-  const [userEmail, setUserEmail] = useState<string>("")
   const [meetings, setMeetings] = useState<Meeting[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  const [newMeeting, setNewMeeting] = useState<Omit<Meeting, "id">>({
+  const [newMeeting, setNewMeeting] = useState({
     date: new Date(),
     time: "",
-    location: "",
+    locationType: "",
     address: "",
-    with: "",
+    participantEmail: "",
+    participantName: "",
     notes: "",
   })
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
-  // Get user email from localStorage or cookies
+  // Check authentication and fetch meetings
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedEmail = localStorage.getItem('userEmail') || 
-                         document.cookie.split('; ').find(row => row.startsWith('user_email='))?.split('=')[1]
-      if (storedEmail) {
-        setUserEmail(storedEmail)
+    if (!user) {
+      router.push('/login')
+      return
+    }
+    fetchMeetings()
+  }, [user, router])
+
+  const fetchMeetings = async () => {
+    try {
+      setIsLoading(true)
+      const res = await fetch('/api/meetings', {
+        credentials: 'include'
+      })
+      
+      if (res.status === 401) {
+        // Authentication required - redirect to login
+        router.push('/login')
+        return
       }
+      
+      const data = await res.json()
+      
+      if (data.success) {
+        // Convert date strings to Date objects
+        const meetingsWithDates = data.meetings.map((meeting: any) => ({
+          ...meeting,
+          date: new Date(meeting.date),
+          createdAt: new Date(meeting.createdAt),
+          updatedAt: new Date(meeting.updatedAt)
+        }))
+        setMeetings(meetingsWithDates)
+      } else {
+        console.warn('No meetings found or API error:', data.error)
+        // Set empty meetings array instead of showing error
+        setMeetings([])
+      }
+    } catch (error) {
+      console.error('Error fetching meetings:', error)
+      // Set empty meetings array for graceful degradation
+      setMeetings([])
+    } finally {
+      setIsLoading(false)
     }
-  }, [])
+  }
 
-  const handleAddMeeting = () => {
-    const meeting = {
-      ...newMeeting,
-      id: meetings.length + 1,
+  const handleAddMeeting = async () => {
+    if (!newMeeting.time || !newMeeting.locationType || !newMeeting.participantEmail) {
+      toast.error("Please fill in all required fields")
+      return
     }
 
-    setMeetings([...meetings, meeting])
-    setIsDialogOpen(false)
-    setNewMeeting({
-      date: new Date(),
-      time: "",
-      location: "",
-      address: "",
-      with: "",
-      notes: "",
-    })
+    try {
+      const res = await fetch('/api/meetings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          participantEmail: newMeeting.participantEmail,
+          participantName: newMeeting.participantName,
+          date: newMeeting.date,
+          time: newMeeting.time,
+          locationType: newMeeting.locationType,
+          address: newMeeting.address,
+          notes: newMeeting.notes,
+        })
+      })
+
+      const data = await res.json()
+      
+      if (data.success) {
+        await fetchMeetings() // Refresh meetings
+        setIsDialogOpen(false)
+        setNewMeeting({
+          date: new Date(),
+          time: "",
+          locationType: "",
+          address: "",
+          participantEmail: "",
+          participantName: "",
+          notes: "",
+        })
+        toast.success("Meeting Request Sent! 🎉", {
+          description: "Your meeting request has been sent and they'll be notified.",
+        })
+      } else {
+        toast.error("Failed to Schedule Meeting", {
+          description: data.error || 'Something went wrong. Please try again.',
+        })
+      }
+    } catch (error) {
+      console.error('Error scheduling meeting:', error)
+      toast.error("Failed to schedule meeting. Please check your connection.")
+    }
   }
 
   const convertMeetingToCalendarEvent = (meeting: Meeting): CalendarEvent => {
@@ -84,26 +170,123 @@ export default function CalendarPage() {
     startDate.setHours(hours, minutes, 0, 0)
     
     const endDate = new Date(startDate)
-    endDate.setHours(hours + 1, minutes, 0, 0) // Default 1 hour duration
+    endDate.setHours(hours + (meeting.duration ? meeting.duration / 60 : 1), minutes, 0, 0)
+
+    const otherParticipant = meeting.requesterEmail === user?.email 
+      ? meeting.participantName 
+      : meeting.requesterName
 
     return {
-      title: `Meeting with ${meeting.with}`,
-      description: meeting.notes,
+      title: meeting.title || `Meeting with ${otherParticipant}`,
+      description: meeting.notes || meeting.description || '',
       startDate,
       endDate,
-      location: `${meeting.location} - ${meeting.address}`,
-      attendees: [userEmail, meeting.with].filter(Boolean)
+      location: `${meeting.locationType}${meeting.address ? ` - ${meeting.address}` : ''}`,
+      attendees: [meeting.requesterEmail, meeting.participantEmail].filter(Boolean)
     }
   }
 
+  const getOtherParticipantName = (meeting: Meeting): string => {
+    return meeting.requesterEmail === user?.email 
+      ? meeting.participantName 
+      : meeting.requesterName
+  }
+
+  const getMeetingStatusColor = (meeting: Meeting): string => {
+    switch (meeting.status) {
+      case 'confirmed': return 'bg-green-100 text-green-800 border-green-200'
+      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+      case 'cancelled': return 'bg-red-100 text-red-800 border-red-200'
+      case 'completed': return 'bg-blue-100 text-blue-800 border-blue-200'
+      default: return 'bg-gray-100 text-gray-800 border-gray-200'
+    }
+  }
+
+  const handleApproveMeeting = async (meetingId: string) => {
+    try {
+      const res = await fetch(`/api/meetings/${meetingId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ action: 'confirm' })
+      })
+
+      const data = await res.json()
+      
+      if (data.success) {
+        await fetchMeetings() // Refresh meetings
+        toast.success("Meeting Approved! 🎉", {
+          description: "The meeting is now confirmed and will appear on both calendars.",
+        })
+      } else {
+        toast.error("Failed to Approve Meeting", {
+          description: data.error || 'Something went wrong. Please try again.',
+        })
+      }
+    } catch (error) {
+      console.error('Error approving meeting:', error)
+      toast.error("Failed to approve meeting. Please check your connection.")
+    }
+  }
+
+  const handleDeclineMeeting = async (meetingId: string) => {
+    try {
+      const res = await fetch(`/api/meetings/${meetingId}?reason=Declined by participant`, {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+
+      const data = await res.json()
+      
+      if (data.success) {
+        await fetchMeetings() // Refresh meetings
+        toast.success("Meeting Declined", {
+          description: "The meeting request has been cancelled and removed from both calendars.",
+        })
+      } else {
+        toast.error("Failed to Decline Meeting", {
+          description: data.error || 'Something went wrong. Please try again.',
+        })
+      }
+    } catch (error) {
+      console.error('Error declining meeting:', error)
+      toast.error("Failed to decline meeting. Please check your connection.")
+    }
+  }
+
+  // Get pending meeting requests for current user
+  const pendingRequests = meetings.filter(
+    meeting => meeting.status === 'pending' && meeting.participantEmail === user?.email
+  )
+
+  // Get confirmed meetings for display
+  const confirmedMeetings = meetings.filter(
+    meeting => meeting.status === 'confirmed' || meeting.status === 'completed'
+  )
+
+  // Filter meetings for display
+
   const filteredMeetings = date
-    ? meetings.filter(
+    ? confirmedMeetings.filter(
         (meeting) =>
           meeting.date.getDate() === date.getDate() &&
           meeting.date.getMonth() === date.getMonth() &&
           meeting.date.getFullYear() === date.getFullYear(),
       )
     : []
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col h-full pt-safe pb-safe">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+            <p className="text-slate-600">Loading your calendar...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col h-full pt-safe pb-safe">
@@ -172,15 +355,28 @@ export default function CalendarPage() {
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="meeting-with" className="text-right font-semibold text-slate-700">
-                    Meeting With
+                  <Label htmlFor="participant-email" className="text-right font-semibold text-slate-700">
+                    Email
                   </Label>
                   <Input
-                    id="meeting-with"
-                    value={newMeeting.with}
-                    onChange={(e) => setNewMeeting({ ...newMeeting, with: e.target.value })}
+                    id="participant-email"
+                    type="email"
+                    value={newMeeting.participantEmail}
+                    onChange={(e) => setNewMeeting({ ...newMeeting, participantEmail: e.target.value })}
                     className="col-span-3 border-slate-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200"
-                    placeholder="Enter name or email"
+                    placeholder="Enter participant's email"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="participant-name" className="text-right font-semibold text-slate-700">
+                    Name
+                  </Label>
+                  <Input
+                    id="participant-name"
+                    value={newMeeting.participantName}
+                    onChange={(e) => setNewMeeting({ ...newMeeting, participantName: e.target.value })}
+                    className="col-span-3 border-slate-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200"
+                    placeholder="Enter participant's name"
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -188,8 +384,8 @@ export default function CalendarPage() {
                     Location Type
                   </Label>
                   <Select
-                    onValueChange={(value) => setNewMeeting({ ...newMeeting, location: value })}
-                    defaultValue={newMeeting.location}
+                    onValueChange={(value) => setNewMeeting({ ...newMeeting, locationType: value })}
+                    value={newMeeting.locationType}
                   >
                     <SelectTrigger className="col-span-3 border-slate-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200">
                       <SelectValue placeholder="Select location type" />
@@ -241,11 +437,101 @@ export default function CalendarPage() {
           </Dialog>
         </div>
 
+        {/* Meeting Requests Section */}
+        {pendingRequests.length > 0 && (
+          <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200 shadow-lg mb-6">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-gradient-to-br from-yellow-100 to-orange-100 rounded-lg">
+                  <CalendarIcon className="h-5 w-5 text-yellow-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl font-bold text-slate-800">
+                    Meeting Requests ({pendingRequests.length})
+                  </CardTitle>
+                  <CardDescription className="text-slate-600">
+                    You have pending meeting requests that need your response
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {pendingRequests.map((meeting) => (
+                  <div key={meeting._id} className="bg-white rounded-xl p-4 border border-yellow-200 shadow-sm">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h4 className="font-semibold text-lg text-slate-800">
+                          Meeting Request from {getOtherParticipantName(meeting)}
+                        </h4>
+                        <p className="text-slate-600 text-sm">
+                          {format(meeting.date, "EEEE, MMMM d, yyyy")} at {meeting.time}
+                        </p>
+                      </div>
+                      <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+                        Pending
+                      </Badge>
+                    </div>
+                    
+                    <div className="grid md:grid-cols-2 gap-4 mb-4">
+                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                        <MapPin className="h-4 w-4 text-orange-500" />
+                        <span>{meeting.locationType}</span>
+                      </div>
+                      {meeting.address && (
+                        <div className="flex items-center gap-2 text-sm text-slate-600">
+                          <span className="font-medium">Address:</span>
+                          <span>{meeting.address}</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {meeting.notes && (
+                      <div className="bg-slate-50 rounded-lg p-3 mb-4">
+                        <p className="text-sm text-slate-700">
+                          <span className="font-medium">Notes:</span> {meeting.notes}
+                        </p>
+                      </div>
+                    )}
+                    
+                    <div className="flex gap-3">
+                      <Button
+                        onClick={() => handleApproveMeeting(meeting._id)}
+                        className="bg-green-500 hover:bg-green-600 text-white flex-1"
+                      >
+                        <span className="mr-2">✓</span>
+                        Accept Meeting
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => handleDeclineMeeting(meeting._id)}
+                        className="border-red-200 hover:bg-red-50 text-red-600 flex-1"
+                      >
+                        <span className="mr-2">✗</span>
+                        Decline
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-[380px_1fr] gap-6 flex-1 overflow-auto">
           {/* Enhanced Calendar Card */}
           <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
             <CardContent className="p-0">
-              <Calendar mode="single" selected={date} onSelect={setDate} className="rounded-xl" />
+              <Calendar 
+                mode="single" 
+                selected={date} 
+                onSelect={(newDate) => {
+                  setDate(newDate)
+                }} 
+                className="rounded-xl"
+                key={`calendar-${date?.getTime() || 'no-date'}`}
+                defaultMonth={date}
+              />
             </CardContent>
           </Card>
 
@@ -283,13 +569,20 @@ export default function CalendarPage() {
                 ) : (
                   <div className="space-y-4">
                     {filteredMeetings.map((meeting) => (
-                      <div key={meeting.id} className="border border-slate-200 rounded-xl p-6 space-y-4 bg-gradient-to-br from-slate-50 to-blue-50">
+                      <div key={meeting._id} className="border border-slate-200 rounded-xl p-6 space-y-4 bg-gradient-to-br from-slate-50 to-blue-50">
                         <div className="flex justify-between items-start">
                           <div className="flex items-center gap-3">
                             <div className="p-2 bg-gradient-to-br from-orange-100 to-red-100 rounded-lg">
                               <Users className="h-5 w-5 text-orange-600" />
                             </div>
-                            <h3 className="font-semibold text-lg text-slate-800">Meeting with {meeting.with}</h3>
+                            <div>
+                              <h3 className="font-semibold text-lg text-slate-800">
+                                Meeting with {getOtherParticipantName(meeting)}
+                              </h3>
+                              <Badge className={`text-xs ${getMeetingStatusColor(meeting)}`}>
+                                {meeting.status.charAt(0).toUpperCase() + meeting.status.slice(1)}
+                              </Badge>
+                            </div>
                           </div>
                           <div className="flex items-center text-slate-600 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-slate-200">
                             <Clock className="h-4 w-4 mr-1" />
@@ -299,8 +592,8 @@ export default function CalendarPage() {
                         <div className="flex items-start gap-3 text-slate-600">
                           <MapPin className="h-4 w-4 mt-1 text-orange-500" />
                           <div>
-                            <p className="font-semibold text-slate-800">{meeting.location}</p>
-                            <p className="text-sm">{meeting.address}</p>
+                            <p className="font-semibold text-slate-800">{meeting.locationType}</p>
+                            {meeting.address && <p className="text-sm">{meeting.address}</p>}
                           </div>
                         </div>
                         {meeting.notes && (
@@ -311,19 +604,23 @@ export default function CalendarPage() {
                         <div className="flex gap-2 pt-2">
                           <AddToCalendarButton 
                             event={convertMeetingToCalendarEvent(meeting)}
-                            userEmail={userEmail}
+                            userEmail={user?.email || ''}
                             variant="outline"
                             size="sm"
                             className="border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200"
                           />
-                          <Button variant="outline" size="sm" className="border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200">
-                            <Edit3 className="h-4 w-4 mr-2" />
-                            Reschedule
-                          </Button>
-                          <Button variant="outline" size="sm" className="text-red-500 hover:text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 transition-all duration-200">
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Cancel
-                          </Button>
+                          {meeting.status !== 'cancelled' && meeting.status !== 'completed' && (
+                            <>
+                              <Button variant="outline" size="sm" className="border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200">
+                                <Edit3 className="h-4 w-4 mr-2" />
+                                Reschedule
+                              </Button>
+                              <Button variant="outline" size="sm" className="text-red-500 hover:text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 transition-all duration-200">
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Cancel
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -347,18 +644,23 @@ export default function CalendarPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {meetings
+                  {confirmedMeetings
                     .filter((meeting) => meeting.date >= new Date())
                     .sort((a, b) => a.date.getTime() - b.date.getTime())
                     .slice(0, 3)
                     .map((meeting) => (
-                      <div key={meeting.id} className="flex items-center gap-4 p-4 border border-slate-200 rounded-xl bg-gradient-to-br from-slate-50 to-blue-50 hover:shadow-md transition-all duration-200">
+                      <div key={meeting._id} className="flex items-center gap-4 p-4 border border-slate-200 rounded-xl bg-gradient-to-br from-slate-50 to-blue-50 hover:shadow-md transition-all duration-200">
                         <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-orange-100 to-red-100 rounded-full flex items-center justify-center">
                           <CalendarIcon className="h-5 w-5 text-orange-600" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-start">
-                            <p className="font-semibold text-slate-800 truncate">{meeting.with}</p>
+                            <div>
+                              <p className="font-semibold text-slate-800 truncate">{getOtherParticipantName(meeting)}</p>
+                              <Badge className={`text-xs mt-1 ${getMeetingStatusColor(meeting)}`}>
+                                {meeting.status.charAt(0).toUpperCase() + meeting.status.slice(1)}
+                              </Badge>
+                            </div>
                             <p className="text-sm text-slate-600 font-medium bg-white/80 backdrop-blur-sm px-2 py-1 rounded-full">
                               {format(meeting.date, "MMM d")}
                             </p>
@@ -369,12 +671,12 @@ export default function CalendarPage() {
                           </div>
                           <div className="flex items-center gap-1 text-sm text-slate-600 mt-1">
                             <MapPin className="h-3 w-3" />
-                            <span className="truncate">{meeting.location}</span>
+                            <span className="truncate">{meeting.locationType}</span>
                           </div>
                           <div className="mt-3">
                             <AddToCalendarButton 
                               event={convertMeetingToCalendarEvent(meeting)}
-                              userEmail={userEmail}
+                              userEmail={user?.email || ''}
                               variant="ghost"
                               size="sm"
                               className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 transition-all duration-200"
@@ -383,7 +685,7 @@ export default function CalendarPage() {
                         </div>
                       </div>
                     ))}
-                  {meetings.filter((meeting) => meeting.date >= new Date()).length === 0 && (
+                  {confirmedMeetings.filter((meeting) => meeting.date >= new Date()).length === 0 && (
                     <div className="text-center py-8">
                       <div className="w-12 h-12 bg-gradient-to-br from-slate-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
                         <Clock className="h-6 w-6 text-slate-400" />

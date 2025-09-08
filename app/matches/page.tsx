@@ -6,6 +6,23 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { Calendar as CalendarComponent } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { format } from "date-fns"
+import { toast } from "sonner"
 import { 
   Heart, 
   MessageCircle, 
@@ -15,7 +32,8 @@ import {
   DollarSign, 
   Star,
   ArrowRight,
-  Search
+  Search,
+  CalendarPlus
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -43,12 +61,32 @@ interface Match {
   createdAt: string
 }
 
+type NewMeeting = {
+  date: Date
+  time: string
+  locationType: string
+  address: string
+  notes: string
+}
+
 export default function MatchesPage() {
   const router = useRouter()
   const { user } = useAuth()
   const [matches, setMatches] = useState<Match[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  
+  // Meeting scheduling state
+  const [isMeetingDialogOpen, setIsMeetingDialogOpen] = useState(false)
+  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null)
+  const [isSchedulingMeeting, setIsSchedulingMeeting] = useState(false)
+  const [newMeeting, setNewMeeting] = useState<NewMeeting>({
+    date: new Date(),
+    time: "",
+    locationType: "",
+    address: "",
+    notes: "",
+  })
 
 
 
@@ -94,6 +132,63 @@ export default function MatchesPage() {
   const handleStartChat = (email: string) => {
     // Navigate to chat page
     router.push(`/chat?other=${encodeURIComponent(email)}`)
+  }
+
+  const handleScheduleMeeting = (match: Match) => {
+    setSelectedMatch(match)
+    setIsMeetingDialogOpen(true)
+    // Reset form
+    setNewMeeting({
+      date: new Date(),
+      time: "",
+      locationType: "",
+      address: "",
+      notes: "",
+    })
+  }
+
+  const submitMeeting = async () => {
+    if (!selectedMatch || !newMeeting.time || !newMeeting.locationType) {
+      return
+    }
+
+    setIsSchedulingMeeting(true)
+    try {
+      const res = await fetch('/api/meetings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          participantEmail: selectedMatch.email,
+          participantName: selectedMatch.name,
+          date: newMeeting.date,
+          time: newMeeting.time,
+          locationType: newMeeting.locationType,
+          address: newMeeting.address,
+          notes: newMeeting.notes,
+        })
+      })
+
+      const data = await res.json()
+      
+      if (data.success) {
+        setIsMeetingDialogOpen(false)
+        setSelectedMatch(null)
+        // Show success message with more context
+        toast.success(`Meeting Request Sent to ${selectedMatch.name}! 🎉`, {
+          description: "They will see this request in their calendar and can accept or decline it. Once accepted, the meeting will appear on both calendars.",
+        })
+      } else {
+        toast.error("Failed to Schedule Meeting", {
+          description: data.error || 'Something went wrong. Please try again.',
+        })
+      }
+    } catch (error) {
+      console.error('Error scheduling meeting:', error)
+      toast.error("Failed to schedule meeting. Please check your connection.")
+    } finally {
+      setIsSchedulingMeeting(false)
+    }
   }
 
 
@@ -282,23 +377,34 @@ export default function MatchesPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-2 pt-2">
+                  <div className="flex flex-col gap-2 pt-2">
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleViewProfile(match.name)}
+                        className="flex-1 border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                      >
+                        <User className="h-3 w-3 mr-1" />
+                        Profile
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => handleStartChat(match.email)}
+                        className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                      >
+                        <MessageCircle className="h-3 w-3 mr-1" />
+                        Chat
+                      </Button>
+                    </div>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleViewProfile(match.name)}
-                      className="flex-1 border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                      onClick={() => handleScheduleMeeting(match)}
+                      className="w-full border-green-200 hover:bg-green-50 hover:border-green-300 text-green-700"
                     >
-                      <User className="h-3 w-3 mr-1" />
-                      Profile
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => handleStartChat(match.email)}
-                      className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-                    >
-                      <MessageCircle className="h-3 w-3 mr-1" />
-                      Chat
+                      <CalendarPlus className="h-3 w-3 mr-1" />
+                      Schedule Meeting
                     </Button>
                   </div>
                 </CardContent>
@@ -308,6 +414,134 @@ export default function MatchesPage() {
         )}
       </div>
 
+      {/* Meeting Scheduling Dialog */}
+      <Dialog open={isMeetingDialogOpen} onOpenChange={setIsMeetingDialogOpen}>
+        <DialogContent className="sm:max-w-[500px] bg-white/95 backdrop-blur-sm border-0 shadow-2xl">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-gradient-to-br from-green-100 to-emerald-100 rounded-lg">
+                <CalendarPlus className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl font-bold text-slate-800">
+                  Schedule Meeting with {selectedMatch?.name}
+                </DialogTitle>
+                <DialogDescription className="text-slate-600">
+                  Plan your roommate meetup
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="meeting-date" className="text-right font-semibold text-slate-700">
+                Date
+              </Label>
+              <div className="col-span-3">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start text-left font-normal border-slate-200 hover:border-green-500 hover:bg-green-50 transition-all duration-200"
+                    >
+                      <Calendar className="mr-2 h-4 w-4" />
+                      {newMeeting.date ? format(newMeeting.date, "PPP") : "Select date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-white/95 backdrop-blur-sm border-0 shadow-xl">
+                    <CalendarComponent
+                      mode="single"
+                      selected={newMeeting.date}
+                      onSelect={(date) => setNewMeeting({ ...newMeeting, date: date || new Date() })}
+                      initialFocus
+                      disabled={(date) => date < new Date()}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="meeting-time" className="text-right font-semibold text-slate-700">
+                Time
+              </Label>
+              <Input
+                id="meeting-time"
+                type="time"
+                value={newMeeting.time}
+                onChange={(e) => setNewMeeting({ ...newMeeting, time: e.target.value })}
+                className="col-span-3 border-slate-200 focus:border-green-500 focus:ring-green-500 transition-all duration-200"
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="meeting-location" className="text-right font-semibold text-slate-700">
+                Location Type
+              </Label>
+              <Select
+                onValueChange={(value) => setNewMeeting({ ...newMeeting, locationType: value })}
+                value={newMeeting.locationType}
+              >
+                <SelectTrigger className="col-span-3 border-slate-200 focus:border-green-500 focus:ring-green-500 transition-all duration-200">
+                  <SelectValue placeholder="Select location type" />
+                </SelectTrigger>
+                <SelectContent className="bg-white/95 backdrop-blur-sm border-0 shadow-xl">
+                  <SelectItem value="Coffee Shop">☕ Coffee Shop</SelectItem>
+                  <SelectItem value="Apartment Viewing">🏠 Apartment Viewing</SelectItem>
+                  <SelectItem value="Video Call">📹 Video Call</SelectItem>
+                  <SelectItem value="Restaurant">🍽️ Restaurant</SelectItem>
+                  <SelectItem value="Other">📍 Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="meeting-address" className="text-right font-semibold text-slate-700">
+                Address
+              </Label>
+              <Input
+                id="meeting-address"
+                value={newMeeting.address}
+                onChange={(e) => setNewMeeting({ ...newMeeting, address: e.target.value })}
+                className="col-span-3 border-slate-200 focus:border-green-500 focus:ring-green-500 transition-all duration-200"
+                placeholder="Enter full address (optional)"
+              />
+            </div>
+            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="meeting-notes" className="text-right font-semibold text-slate-700">
+                Notes
+              </Label>
+              <Textarea
+                id="meeting-notes"
+                value={newMeeting.notes}
+                onChange={(e) => setNewMeeting({ ...newMeeting, notes: e.target.value })}
+                className="col-span-3 border-slate-200 focus:border-green-500 focus:ring-green-500 transition-all duration-200"
+                placeholder="Add any additional notes..."
+                rows={3}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsMeetingDialogOpen(false)}
+              className="border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={submitMeeting}
+              disabled={isSchedulingMeeting || !newMeeting.time || !newMeeting.locationType}
+              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+            >
+              {isSchedulingMeeting ? 'Scheduling...' : 'Send Request'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   )

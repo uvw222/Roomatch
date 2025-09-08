@@ -3,11 +3,34 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { MessageCircle, Calendar, User, Home, Heart, TrendingUp, Users, Clock, ArrowRight, Plus, Edit3 } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { MessageCircle, Calendar, User, Home, Heart, TrendingUp, Users, Clock, ArrowRight, Plus, Edit3, MapPin } from "lucide-react"
 import Link from "next/link"
 import { useUnreadMessages } from "@/hooks/useUnreadMessages"
 import { useAuth } from "@/hooks/useAuth"
 import { useProfile } from "@/hooks/useProfile"
+import { format } from "date-fns"
+
+type Meeting = {
+  _id: string
+  requesterEmail: string
+  participantEmail: string
+  requesterName: string
+  participantName: string
+  title?: string
+  description?: string
+  notes?: string
+  date: Date
+  time: string
+  duration?: number
+  locationType: string
+  address?: string
+  status: "pending" | "confirmed" | "cancelled" | "completed"
+  requesterConfirmed: boolean
+  participantConfirmed: boolean
+  createdAt: Date
+  updatedAt: Date
+}
 
 export default function DashboardPage() {
   const { user } = useAuth()
@@ -15,6 +38,8 @@ export default function DashboardPage() {
   const { unreadCount } = useUnreadMessages()
   const [matchCount, setMatchCount] = useState(0)
   const [isLoadingMatches, setIsLoadingMatches] = useState(true)
+  const [meetings, setMeetings] = useState<Meeting[]>([])
+  const [isLoadingMeetings, setIsLoadingMeetings] = useState(true)
 
   // Fetch actual mutual matches count
   useEffect(() => {
@@ -44,6 +69,62 @@ export default function DashboardPage() {
       fetchMatches()
     }
   }, [user, profile])
+
+  // Fetch meetings
+  useEffect(() => {
+    const fetchMeetings = async () => {
+      try {
+        setIsLoadingMeetings(true)
+        const res = await fetch('/api/meetings', {
+          credentials: 'include'
+        })
+        
+        if (res.status === 401) {
+          return // Not authenticated
+        }
+        
+        const data = await res.json()
+        
+        if (data.success) {
+          // Convert date strings to Date objects
+          const meetingsWithDates = data.meetings.map((meeting: any) => ({
+            ...meeting,
+            date: new Date(meeting.date),
+            createdAt: new Date(meeting.createdAt),
+            updatedAt: new Date(meeting.updatedAt)
+          }))
+          setMeetings(meetingsWithDates)
+        } else {
+          console.error('Failed to fetch meetings:', data.error)
+          setMeetings([])
+        }
+      } catch (error) {
+        console.error('Error fetching meetings:', error)
+        setMeetings([])
+      } finally {
+        setIsLoadingMeetings(false)
+      }
+    }
+
+    if (user) {
+      fetchMeetings()
+    }
+  }, [user])
+
+  // Get upcoming meetings (confirmed and pending requests for user)
+  const upcomingMeetings = meetings.filter(meeting => {
+    const now = new Date()
+    const meetingDate = new Date(meeting.date)
+    return meetingDate >= now && (meeting.status === 'confirmed' || 
+      (meeting.status === 'pending' && meeting.participantEmail === user?.email))
+  }).slice(0, 3) // Show only 3 most recent
+
+  // Helper function to get other participant name
+  const getOtherParticipantName = (meeting: Meeting) => {
+    return meeting.requesterEmail === user?.email 
+      ? meeting.participantName 
+      : meeting.requesterName
+  }
 
   if (profileLoading || !profile) {
     return (
@@ -214,17 +295,47 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
                 <div className="space-y-3 sm:space-y-4">
-                  <div className="text-center py-6 sm:py-8 border-2 border-dashed border-slate-200 rounded-xl bg-gradient-to-br from-slate-50 to-blue-50">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3">
-                      <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
+                  {isLoadingMeetings ? (
+                    <div className="text-center py-4">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
+                      <p className="text-xs text-slate-500 mt-2">Loading meetings...</p>
                     </div>
-                    <p className="text-sm sm:text-base text-slate-600 mb-2 sm:mb-3">No meetings scheduled</p>
-                    <p className="text-xs sm:text-sm text-slate-500 px-2">Schedule meetings with your matches</p>
-                  </div>
+                  ) : upcomingMeetings.length === 0 ? (
+                    <div className="text-center py-6 sm:py-8 border-2 border-dashed border-slate-200 rounded-xl bg-gradient-to-br from-slate-50 to-blue-50">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3">
+                        <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
+                      </div>
+                      <p className="text-sm sm:text-base text-slate-600 mb-2 sm:mb-3">No meetings scheduled</p>
+                      <p className="text-xs sm:text-sm text-slate-500 px-2">Schedule meetings with your matches</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {upcomingMeetings.map((meeting) => (
+                        <div key={meeting._id} className="p-3 border border-slate-200 rounded-lg bg-gradient-to-br from-slate-50 to-blue-50 hover:shadow-md transition-all duration-200">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                              <h4 className="font-semibold text-sm text-slate-800">{getOtherParticipantName(meeting)}</h4>
+                              <Badge variant={meeting.status === 'confirmed' ? 'default' : 'secondary'} className="text-xs">
+                                {meeting.status === 'pending' ? 'Request' : 'Confirmed'}
+                              </Badge>
+                            </div>
+                            <span className="text-xs text-slate-500">{format(meeting.date, 'MMM d')}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-slate-600">
+                            <Clock className="h-3 w-3" />
+                            <span>{meeting.time}</span>
+                            <MapPin className="h-3 w-3 ml-1" />
+                            <span className="truncate">{meeting.locationType}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <Link href="/calendar">
                     <Button size="sm" variant="outline" className="w-full border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200">
                       <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
-                      Schedule Meeting
+                      {upcomingMeetings.length === 0 ? 'Schedule Meeting' : 'View Calendar'}
                     </Button>
                   </Link>
                 </div>
